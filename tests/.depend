@@ -1,0 +1,3 @@
+ppx_string.cmo ppx_string.exe: ../local-install/lib/pa_ppx_string/META
+ppx_string.cmo :
+ppx_string.cmx :

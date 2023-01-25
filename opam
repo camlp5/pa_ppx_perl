@@ -1,0 +1,32 @@
+synopsis: "A Camlp5 PPX Rewriter for Perl Regexp Workalikes "
+description:
+"""
+This is a PPX Rewriter for some workalikes to perl regexp operations,
+based on Camlp5 (so it's compatible with all the other Camlp5-based PPX rewriters).
+"""
+opam-version: "2.0"
+maintainer: "Chet Murthy <chetsky@gmail.com>"
+authors: ["Chet Murthy"]
+homepage: "https://github.com/camlp5/pa_ppx_perl"
+license: "BSD-3-Clause"
+bug-reports: "https://github.com/camlp5/pa_ppx_perl/issues"
+dev-repo: "git+https://github.com/camlp5/pa_ppx_perl.git"
+doc: "https://github.com/camlp5/pa_ppx_perl/doc"
+
+depends: [
+  "ocaml"       { >= "4.10.0" & < "5.01.0" }
+  "conf-perl"
+  "conf-perl-ipc-system-simple"
+  "conf-perl-string-shellquote"
+  "camlp5"      { >= "8.00" }
+  "pa_ppx"      { >= "0.08" }
+  "not-ocamlfind" { >= "0.01" }
+  "ounit" {with-test}
+  "fmt"
+  "re"
+]
+build: [
+  [make "sys"]
+  [make "test"] {with-test}
+]
+install: [make "install"]
