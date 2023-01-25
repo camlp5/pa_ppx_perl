@@ -33,7 +33,7 @@ let build_string loc patstr =
                           | [e;pad] ->
                              let e = parse_expr e in
                              let pad = parse_expr pad in
-                             <:expr< Pa_ppx_string.Runtime.pad $exp:e$ $exp:pad$ >>
+                             <:expr< Pa_ppx_perl.Runtime.pad $exp:e$ $exp:pad$ >>
                           | _ -> Fmt.(raise_failwithf loc "pa_ppx_string: expression %a had more than one colon `:'" Dump.string contents)) in
   let listexpr = convert_up_list_expr loc parts_exps in
   <:expr< String.concat "" $exp:listexpr$ >>
@@ -51,7 +51,7 @@ let ef = EF.{ (ef) with
     fun arg fallback ->
       Some (rewrite_expr arg z)
   ] } in
-  Pa_passthru.(install { name = "pa_string"; ef =  ef ; pass = None ; before = [] ; after = [] })
+  Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;
 
 install();;

@@ -7,16 +7,16 @@ use Version ;
 our $destdir = shift @ARGV ;
 
 print <<"EOF";
-# Specifications for the "pa_ppx_string_runtime" package:
+# Specifications for the "pa_ppx_perl_runtime" package:
 requires = "fmt"
 version = "$Version::version"
-description = "pa_ppx_string runtime support"
+description = "pa_ppx_perl runtime support"
 
 # For linking
-archive(byte) = "pa_ppx_string_runtime.cma"
-archive(native) = "pa_ppx_string_runtime.cmxa"
+archive(byte) = "pa_ppx_perl_runtime.cma"
+archive(native) = "pa_ppx_perl_runtime.cmxa"
 
 # For the toploop:
-archive(byte,toploop) = "pa_ppx_string_runtime.cma"
+archive(byte,toploop) = "pa_ppx_perl_runtime.cma"
 
 EOF

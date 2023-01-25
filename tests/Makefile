@@ -7,21 +7,21 @@ OCAMLFIND=$(LAUNCH) ocamlfind
 NOT_OCAMLFIND=$(LAUNCH) not-ocamlfind
 SYNTAX := camlp5o
 
-PACKAGES := $(PACKAGES),pa_ppx_string,ounit2
+PACKAGES := $(PACKAGES),pa_ppx_perl,ounit2
 
 ML= \
-	ppx_string.ml
+	ppx_perl.ml
 
 CMO := $(ML:.ml=.cmo)
 
-TESTS=ppx_string.exe
+TESTS=ppx_perl.exe
 
 all: $(TESTS)
 
 test:: all
-	mkdir -p _build && ./ppx_string.exe
+	mkdir -p _build && ./ppx_perl.exe
 
-ppx_string.exe: ppx_string.cmo
+ppx_perl.exe: ppx_perl.cmo
 	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 clean::
