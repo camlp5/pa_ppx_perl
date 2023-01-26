@@ -105,6 +105,15 @@ let build_regexp loc ~options restr =
             $exp:result$ >>
 end
 
+
+module Pattern = struct
+
+let build_string loc patstr = assert false
+
+let build_expr loc patexpr = patexpr
+
+end
+
 let extract_options e =
   let conv1 = function
       <:expr< $lid:s$ >> -> s
@@ -126,6 +135,11 @@ let rewrite_split arg = function
    Split.build_regexp loc ~options s
 | _ -> assert false
 
+let rewrite_pattern arg = function
+  <:expr:< [%"pattern" $str:s$ ;] >> -> Pattern.build_string loc s
+| <:expr:< [%"pattern" $exp:e$ ;] >> -> Pattern.build_expr loc e
+| _ -> assert false
+
 let install () = 
 let ef = EF.mk () in 
 let ef = EF.{ (ef) with
@@ -136,6 +150,9 @@ let ef = EF.{ (ef) with
   | <:expr:< [%"split" $exp:_$ ;] >> as z ->
     fun arg fallback ->
       Some (rewrite_split arg z)
+  | <:expr:< [%"pattern" $exp:_$ ;] >> as z ->
+    fun arg fallback ->
+      Some (rewrite_pattern arg z)
   ] } in
   Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;

@@ -32,11 +32,18 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text ""; `Delim"a"; `Text "b"; `Delim"a"]  ([%split "a"/ strings] "abaaba")
   ; assert_equal [`Delim("a",None); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("a",None)]  ([%split "a(c)?"/ strings] "abacba")
 
+
+let test_patsubst ctxt =
+  ()
+  ; assert_equal "abc"  (let s = "abc" in [%pattern s])
+
+
 let suite = "Test pa_ppx_string" >::: [
       "simple_match"   >:: test_simple_match
     ; "search"   >:: test_search
     ; "simple_split"   >:: test_simple_split
     ; "delim_split"   >:: test_delim_split
+    ; "patsubst"   >:: test_patsubst
     ]
 
 let _ = 
