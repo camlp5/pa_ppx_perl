@@ -14,6 +14,7 @@ let test_simple ctxt =
   ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings] "abc")
   ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings] "ac")
   ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc i] "abc") 0)
+  ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
 let test_search ctxt =
   ()
