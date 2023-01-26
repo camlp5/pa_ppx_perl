@@ -108,9 +108,26 @@ end
 
 module Pattern = struct
 
-let build_string loc patstr = assert false
+let string_parts_pattern = Re.Perl.compile_pat {|\$\$|\$([0-9]+)|\$\{([0-9]+)\}|\$\{([^}]+)\}|}
 
-let build_expr loc patexpr = patexpr
+let build_string loc patstr =
+  let parts = Re.split_full string_parts_pattern patstr in
+  let parts_exps =
+    parts |> List.map (function
+                   `Text s -> <:expr< $str:s$ >>
+                 | `Delim g ->
+                    match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
+                      (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
+                    | (_, Some nstr, _, _)
+                    | (_, _, Some nstr, _) -> <:expr< match Re.Group.get_opt __g__ $int:nstr$ with [ None -> "" | Some s -> s ] >>
+                    | (_, _, _, Some exps) ->
+                       parse_expr exps
+                    | _ -> Fmt.(raise_failwithf loc "pa_ppx_perl: unrecognized pattern: <<%a>>" Dump.string patstr)
+               ) in
+  let listexpr = convert_up_list_expr loc parts_exps in
+  <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
+
+let build_expr loc patexpr = <:expr< fun __g__ -> $exp:patexpr$ >>
 
 end
 
