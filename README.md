@@ -64,15 +64,14 @@ type: `Re.Group.t -> string`
 
 In the first case, the pattern can contain $N or ${N} (where N is an
 integer) and these will be replaced with calls to the N-th capture
-group (where None gets mapped to the emptry string).  Instances of
-${...} are treated as antiquotations and mapped to expressions.
+group (where None gets mapped to the emptry string).  Other instances
+of ${...} are treated as antiquotations and mapped to expressions.
 
 In the second case, the expression can contain $N$ (where N is an
-integer) and these are treated as $N above.  In all other cases, $...$
-is handled as an antiquotation.
+integer) and these are treated as $N above.
 
 So both syntaxes support both capture-variables ($N/${N} vs. $N$) and
-antiquotations (${...} vs $....$)
+antiquotations (${...} vs plain expressions)
 
 ## Match-and-replace
 
