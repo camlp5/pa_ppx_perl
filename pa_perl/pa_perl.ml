@@ -67,11 +67,14 @@ let rec build_result loc rty ngroups =
   let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
   let groupl = group0_exp::group_exps in
   let group_tuple = Expr.tuple loc groupl in
+  let converter_fun_exp =
+    <:expr< fun [ `Text s -> `Text s
+                | `Delim __g__ -> `Delim $exp:group_tuple$ ] >> in
   match rty with
     Nothing ->
      <:expr< Re.split __re__ __subj__ >>
   | Strings ->
-     assert false
+     <:expr< List.map $exp:converter_fun_exp$ (Re.split_full __re__ __subj__) >>
   | Group ->
      <:expr< Re.split_full __re__ __subj__ >>
 
