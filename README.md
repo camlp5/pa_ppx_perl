@@ -10,15 +10,26 @@ Some notes on these extensions
 
 type:
 ```
-string -> (string option) tuple
+string -> result
 ```
 
-```
-[%match {|...re...|} / i]
-```
-case-insensitive matching
+Modifiers
 
-the type of tuple has the same # of components as the # of capture groups in the regexp
+`i`: case-insensitive matching
+`opt`: use option for match-failure instead of exception
+
+The type of result varies depending whether we're using exceptions for
+match-failure or not.
+
+If using exceptions, then the type of result is:
+```
+string * string option * ... * string option
+```
+
+where the # of `string option` corresponds to the # of actual capture groups in the regexp.
+
+If using option, then the type of result is as above, but wrapped in an `option`.
+For a regexp without any captures, this becomes `string option`
 
 ## Split
 
@@ -34,10 +45,10 @@ type: `string -> string list`
 
 type: 
 ```
-string -> [`Text of string | `Delim of (string option) tuple]
+string -> [`Text of string | `Delim of result]
 ```
 
-The tuple is as in match regexps.
+The result is as in match regexps.
 
 ## Substitution Patterns
 
