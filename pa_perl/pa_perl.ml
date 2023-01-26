@@ -12,6 +12,7 @@ let parse_expr s =
 
 type return_type = Strings | Group
 
+module Match = struct
 let rec build_result loc rty ngroups use_exception =
   let groupnums = Std.range (ngroups-1) in
   let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
@@ -30,7 +31,7 @@ let rec build_result loc rty ngroups use_exception =
      let res = build_result loc Group ngroups false in
      <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
 
-let build_match_regexp loc ~options restr =
+let build_regexp loc ~options restr =
   let case_insensitive = List.mem "i" options in
   let use_exception = List.mem "exc" options in
   let return_type =
@@ -53,6 +54,7 @@ let build_match_regexp loc ~options restr =
   <:expr< let __re__ = $exp:regexp_expr$ in
           fun __subj__->
             $exp:result$ >>
+end
 
 let extract_options e =
   let conv1 = function
@@ -62,10 +64,10 @@ let extract_options e =
   (conv1 f)::(List.map conv1 l)
 
 let rewrite_match arg = function
-  <:expr:< [%"match" $str:s$ ;] >> -> build_match_regexp loc ~options:[] s
+  <:expr:< [%"match" $str:s$ ;] >> -> Match.build_regexp loc ~options:[] s
 | <:expr:< [%"match" $str:s$ / $exp:optexpr$ ;] >> ->
    let options = extract_options optexpr in
-   build_match_regexp loc ~options s
+   Match.build_regexp loc ~options s
 | _ -> assert false
 
 
