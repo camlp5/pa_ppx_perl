@@ -15,8 +15,14 @@ let test_simple ctxt =
   ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings] "ac")
   ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc i] "abc") 0)
 
+let test_search ctxt =
+  ()
+  ; assert_equal "abc"  ([%match "abc"/exc strings] "zzzabc")
+  ; assert_equal None  ([%match "^abc"/strings] "zzzabc")
+    
 let suite = "Test pa_ppx_string" >::: [
       "simple"   >:: test_simple
+    ; "search"   >:: test_search
     ]
 
 let _ = 
