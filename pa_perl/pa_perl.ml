@@ -17,6 +17,7 @@ let rec build_result loc rty ngroups use_exception =
   let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
   let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
   let groupl = group0_exp::group_exps in
+  let group_tuple = Expr.tuple loc groupl in
   match (rty, use_exception) with
     (Group, false) ->
      <:expr< Re.exec_opt __re__ __subj__ >>
@@ -24,10 +25,10 @@ let rec build_result loc rty ngroups use_exception =
      <:expr< Re.exec __re__ __subj__ >>
   | (Strings, true) ->
      let res = build_result loc Group ngroups true in
-     <:expr< (fun __g__ -> ( $list:groupl$ )) $exp:res$ >>
+     <:expr< (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
   | (Strings, false) ->
      let res = build_result loc Group ngroups false in
-     <:expr< Option.map (fun __g__ -> ( $list:groupl$ )) $exp:res$ >>
+     <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
 
 let build_match_regexp loc ~options restr =
   let case_insensitive = List.mem "i" options in
