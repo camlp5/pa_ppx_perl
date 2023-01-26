@@ -1,7 +1,7 @@
 open OUnit2
 
 
-let test_simple ctxt =
+let test_simple_match ctxt =
   ()
   ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc] "abc") 0)
   ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc group] "abc") 0)
@@ -20,10 +20,17 @@ let test_search ctxt =
   ()
   ; assert_equal "abc"  ([%match "abc"/exc strings] "zzzabc")
   ; assert_equal None  ([%match "^abc"/strings] "zzzabc")
-    
+
+
+let test_simple_split ctxt =
+  ()
+  ; assert_equal ["bb"]  ([%split "a"] "bb")
+  ; assert_equal ["b";"b"]  ([%split "A"/i] "ababa")
+
 let suite = "Test pa_ppx_string" >::: [
-      "simple"   >:: test_simple
+      "simple_match"   >:: test_simple_match
     ; "search"   >:: test_search
+    ; "simple_split"   >:: test_simple_split
     ]
 
 let _ = 
