@@ -82,14 +82,21 @@ antiquotations (${...} vs plain expressions)
 ```
 
 ```
-[%replace {|...re...|} / expr]
+[%replace {|...re...|} / {|...pattern...|} / ...modifiers...]
 ```
 
 type: `string -> string`
 
-This combines match-regexps and substitutions-patterns.
+This combines match-regexps and substitutions-patterns.  The modifiers
+apply to both, and we can view this as a composite expression:
+```
+fun s ->
+  ([%pattern {|...pattern...|} / ...modifiers...]
+  ([%match {|...re...|} / ...modifiers...] s))
+```
 
 Modifiers
 
 `i` : case-insensitive matching
 `g` : replace all matches
+`e` : pattern is an OCaml expression
