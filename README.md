@@ -87,12 +87,11 @@ antiquotations (${...} vs plain expressions)
 
 type: `string -> string`
 
-This combines match-regexps and substitutions-patterns.  The modifiers
-apply to both, and we can view this as a composite expression:
+This combines match-regexps and substitutions-patterns, and should be
+understood as like the perl
+
 ```
-fun s ->
-  ([%pattern {|...pattern...|} / ...modifiers...]
-  ([%match {|...re...|} / ...modifiers...] s))
+s/re/pat/
 ```
 
 Modifiers
