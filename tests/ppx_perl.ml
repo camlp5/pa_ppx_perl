@@ -61,7 +61,6 @@ let test_ocamlfind_bits ctxt =
        {|(** -syntax camlp5o *)
 |}))
 
-let envvar_pattern = Re.Perl.compile_pat {|(?:\$\(([^)]+)\)|\$\{([^}]+)\})|}
 let envsubst envlookup s =
   let f s1 s2 =
     if s1 <> "" then envlookup s1
