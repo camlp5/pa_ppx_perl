@@ -24,7 +24,7 @@ test:: all
 ppx_perl.exe: ppx_perl.cmo
 	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
-ya-wrap-ocamlfind: ya_wrap_ocamlfind.ml
+ya-wrap-ocamlfind: ya_wrap_ocamlfind.cmo
 	$(OCAMLFIND) ocamlc -linkall -linkpkg -package $(PACKAGES) $< -o $@
 
 promote::

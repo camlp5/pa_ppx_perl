@@ -1,3 +1,4 @@
+(** -syntax camlp5o *)
 let rec split_args cmd = function
   | "--" :: files -> List.rev cmd, files
   | [file] -> List.rev cmd, [file]
@@ -24,9 +25,9 @@ let discover_args f =
   let f' = open_in f in
   let line1 = input_line f' in
   close_in f';
-  match Re.exec_opt comment_pattern line1 with
+  match [%match {|^\(\*\*(.*?)\*\)|} / strings] line1 with
   | None -> ""
-  | Some group -> envsubst (Re.Group.get group 1)
+  | Some (_, Some params) -> envsubst params
 
 let () = 
   let cmd, files =
