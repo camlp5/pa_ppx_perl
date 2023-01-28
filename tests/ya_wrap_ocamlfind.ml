@@ -10,7 +10,7 @@ let envsubst s =
   let envlookup vname =
     match Sys.getenv_opt vname with
       Some v -> v
-    | None -> failwith (Printf.sprintf "ya_wrap_ocamlfind: environment variable <<%s>> not found" vname) in
+    | None -> failwith [%pattern {|ya_wrap_ocamlfind: environment variable <<${vname}>> not found|}] in
   let f s1 s2 =
     if s1 <> "" then envlookup s1
     else if s2 <> "" then envlookup s2

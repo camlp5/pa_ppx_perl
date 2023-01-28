@@ -13,8 +13,9 @@ let envsubst s =
       Some v -> v
     | None ->
         failwith
-          (Printf.sprintf
-             "ya_wrap_ocamlfind: environment variable <<%s>> not found" vname)
+          (String.concat ""
+             ["ya_wrap_ocamlfind: environment variable <<"; vname;
+              ">> not found"])
   in
   let f s1 s2 =
     if s1 <> "" then envlookup s1
@@ -54,6 +55,6 @@ let () =
   List.iter
     (fun f ->
        let extra = discover_args f in
-       let cmd = Printf.sprintf "%s %s %s" cmd extra f in
+       let cmd = String.concat "" [cmd; " "; extra; " "; f] in
        Printf.fprintf stderr "%s\n%!" cmd; ignore (Sys.command cmd))
     files
