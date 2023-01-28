@@ -92,6 +92,16 @@ let parse_antiquot_expr s =
     Ploc.call_with Plexer.force_antiquot_loc true
     (Grammar.Entry.parse Pcaml.expr_eoi) (Stream.of_string s)
 
+let compile_opts loc options =
+  let case_insensitive = List.mem "i" options in
+  let dotall = List.mem "s" options in
+  let multiline = List.mem "m" options in
+  let opts = [] in
+  let opts = if case_insensitive then <:expr< `Caseless >>::opts else opts in
+  let opts = if dotall then <:expr< `Dotall >>::opts else opts in
+  let opts = if multiline then <:expr< `Multiline >>::opts else opts in
+  convert_up_list_expr loc opts
+
 module Match = struct
 
 type return_type = Strings | Group
@@ -115,7 +125,6 @@ let rec build_result loc rty ngroups use_exception =
      <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
 
 let build_regexp loc ~options restr =
-  let case_insensitive = List.mem "i" options in
   let use_exception = List.mem "exc" options in
   let return_type =
     match (List.mem "strings" options, List.mem "group" options) with
@@ -128,10 +137,7 @@ let build_regexp loc ~options restr =
 
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
-  let compile_opt_expr =
-    if case_insensitive then
-      <:expr< [`Caseless] >>
-    else <:expr< [] >> in
+  let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
   let result = build_result loc return_type ngroups use_exception in
   <:expr< let __re__ = $exp:regexp_expr$ in
@@ -163,7 +169,6 @@ let rec build_result loc rty ngroups =
 let build_regexp loc ~options restr =
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
-  let case_insensitive = List.mem "i" options in
   let return_type =
     match (List.mem "strings" options, List.mem "group" options) with
       (false, false) when ngroups=1 -> Nothing
@@ -176,10 +181,7 @@ let build_regexp loc ~options restr =
        Fmt.(raise_failwithf loc "Split.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
             (list Dump.string) options) in
 
-  let compile_opt_expr =
-    if case_insensitive then
-      <:expr< [`Caseless] >>
-    else <:expr< [] >> in
+  let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
   let result = build_result loc return_type ngroups in
   <:expr< let __re__ = $exp:regexp_expr$ in
@@ -246,14 +248,9 @@ end
 
 module Subst = struct
   let build_subst loc ~options restr patstr =
-  let case_insensitive = List.mem "i" options in
   let global = List.mem "g" options in
   let global = if global then <:expr< true >> else <:expr< false >> in
-  let perl_expr = List.mem "e" options in
-  let compile_opt_expr =
-    if case_insensitive then
-      <:expr< [`Caseless] >>
-    else <:expr< [] >> in
+  let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
   let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options patstr in
   <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>

@@ -22,6 +22,30 @@ let test_search ctxt =
   ; assert_equal "abc"  ([%match "abc"/exc strings] "zzzabc")
   ; assert_equal None  ([%match "^abc"/strings] "zzzabc")
 
+let test_single ctxt =
+  ()
+  ; assert_equal None ([%match ".+"] "\n\n")
+  ; assert_equal "\n\n" ([%match ".+" / s exc strings] "\n\n")
+  ; assert_equal None ([%match ".+" / m strings] "\n\n")
+
+  ; assert_equal None ([%match ".+"/ strings] "\n\n")
+  ; assert_equal (Some "\n\n") ([%match ".+"/s strings] "\n\n")
+  ; assert_equal None ([%match ".+"/m strings] "\n\n")
+
+  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}] "abc\ndef")
+  ; assert_equal "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s] "abc\ndef")
+  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m] "abc\ndef")
+
+  ; assert_equal "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|}] "abc\ndef")
+  ; assert_equal "<<abc>><<>>\n<<def>>"  ([%subst ".*" / {|<<$0>>|} / g] "abc\ndef")
+  ; assert_equal "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g] "abc\ndef")
+  ; assert_equal "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g] "abca\ncaec")
+  ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s] "abca\ncaec")
+
+let test_multiline ctxt =
+  ()
+  ; assert_equal (Some "bar")  ([%match ".+$"/ strings] "foo\nbar")
+  ; assert_equal (Some "foo")  ([%match ".+$"/ m strings] "foo\nbar")
 
 let test_simple_split ctxt =
   ()
@@ -80,6 +104,8 @@ let test_envsubst_via_replace ctxt =
 let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
     ; "search"   >:: test_search
+    ; "single"   >:: test_single
+    ; "multiline"   >:: test_multiline
     ; "simple_split"   >:: test_simple_split
     ; "delim_split"   >:: test_delim_split
     ; "string_pattern"   >:: test_string_pattern
