@@ -231,6 +231,22 @@ let build_pattern loc ~options patstr =
 
 end
 
+module Subst = struct
+  let build_subst loc ~options restr patstr =
+  let case_insensitive = List.mem "i" options in
+  let global = List.mem "g" options in
+  let global = if global then <:expr< true >> else <:expr< false >> in
+  let perl_expr = List.mem "e" options in
+  let compile_opt_expr =
+    if case_insensitive then
+      <:expr< [`Caseless] >>
+    else <:expr< [] >> in
+  let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+  let patexpr = Pattern.build_pattern loc ~options patstr in
+  <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
+
+end
+
 let extract_options e =
   let conv1 = function
       <:expr< $lid:s$ >> -> s
@@ -253,11 +269,19 @@ let rewrite_split arg = function
 | _ -> assert false
 
 let rewrite_pattern arg = function
-  <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~options:[] s
-| <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
    let options = extract_options optexpr in
    Pattern.build_pattern loc ~options s
+| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~options:[] s
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_pattern: unsupported extension <<%a>>"
+            Pp_MLast.pp_expr e)
+
+let rewrite_subst arg = function
+  <:expr:< [%subst $str:restr$ / $str:patstr$ / $exp:optexpr$ ;] >> ->
+   let options = extract_options optexpr in
+   Subst.build_subst loc ~options restr patstr
+| <:expr:< [%subst $str:restr$ / $str:patstr$ ;] >> -> Subst.build_subst loc ~options:[] restr patstr
+| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_subst: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
 let install () = 
@@ -273,6 +297,9 @@ let ef = EF.{ (ef) with
   | <:expr:< [%pattern $exp:_$ ;] >> as z ->
     fun arg fallback ->
       Some (rewrite_pattern arg z)
+  | <:expr:< [%subst $exp:_$ ;] >> as z ->
+    fun arg fallback ->
+      Some (rewrite_subst arg z)
   ] } in
   Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;

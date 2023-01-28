@@ -78,11 +78,11 @@ antiquotations (${...} vs plain expressions)
 ## Match-and-replace
 
 ```
-[%replace {|...re...|} / {|...pattern...|}]
+[%subst {|...re...|} / {|...pattern...|}]
 ```
 
 ```
-[%replace {|...re...|} / {|...pattern...|} / ...modifiers...]
+[%subst {|...re...|} / {|...pattern...|} / ...modifiers...]
 ```
 
 type: `string -> string`
