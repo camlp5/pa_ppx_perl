@@ -54,6 +54,25 @@ let test_string_subst ctxt =
   ; assert_equal "$b$b"  ([%subst "A(B)C" / {|$$$1|} / g i] "abcabc")
   ; assert_equal "$b$b"  ([%subst "A(B)C" / {|"$" ^ $1$|} / e g i] "abcabc")
 
+let test_ocamlfind_bits ctxt =
+  ()
+  ; assert_equal (Some " -syntax camlp5o ")
+      (snd ([%match {|^\(\*\*(.*?)\*\)|} / exc strings]
+       {|(** -syntax camlp5o *)
+|}))
+
+let envvar_pattern = Re.Perl.compile_pat {|(?:\$\(([^)]+)\)|\$\{([^}]+)\})|}
+let envsubst envlookup s =
+  let f s1 s2 =
+    if s1 <> "" then envlookup s1
+    else if s2 <> "" then envlookup s2
+    else assert false in
+
+  [%subst {|(?:\$\(([^)]+)\)|\$\{([^}]+)\})|} / {| f $1$ $2$ |} / g e] s
+
+let test_envsubst_via_replace ctxt =
+  let f = function "A" -> "res1" | "B" -> "res2" in
+  assert_equal "...res1...res2..." (envsubst f {|...$(A)...${B}...|})
 
 let suite = "Test pa_ppx_string" >::: [
       "simple_match"   >:: test_simple_match
@@ -63,6 +82,8 @@ let suite = "Test pa_ppx_string" >::: [
     ; "string_pattern"   >:: test_string_pattern
     ; "expr_pattern"   >:: test_expr_pattern
     ; "string_subst"   >:: test_string_subst
+    ; "ocamlfind bits"   >:: test_ocamlfind_bits
+    ; "envsubst via replace"   >:: test_envsubst_via_replace
     ]
 
 let _ = 

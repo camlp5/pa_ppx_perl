@@ -126,7 +126,7 @@ let build_regexp loc ~options restr =
        Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
             (list Dump.string) options) in
 
-  let re = Re.Perl.compile_pat restr in
+  let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
   let compile_opt_expr =
     if case_insensitive then
@@ -161,7 +161,7 @@ let rec build_result loc rty ngroups =
      <:expr< Re.split_full __re__ __subj__ >>
 
 let build_regexp loc ~options restr =
-  let re = Re.Perl.compile_pat restr in
+  let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
   let case_insensitive = List.mem "i" options in
   let return_type =
@@ -196,7 +196,9 @@ let build_string loc patstr =
   let parts = Re.split_full string_parts_pattern patstr in
   let parts_exps =
     parts |> List.map (function
-                   `Text s -> <:expr< $str:s$ >>
+                   `Text s ->
+                    let s = String.escaped s in
+                    <:expr< $str:s$ >>
                  | `Delim g ->
                     match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
                       (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
