@@ -73,7 +73,7 @@ let test_envsubst_via_replace ctxt =
   let f = function "A" -> "res1" | "B" -> "res2" in
   assert_equal "...res1...res2..." (envsubst f {|...$(A)...${B}...|})
 
-let suite = "Test pa_ppx_string" >::: [
+let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
     ; "search"   >:: test_search
     ; "simple_split"   >:: test_simple_split
