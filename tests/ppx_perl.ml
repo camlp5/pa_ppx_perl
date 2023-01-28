@@ -52,6 +52,7 @@ let test_string_subst ctxt =
   ; assert_equal "$b"  ([%subst "A(B)C" / {|$$$1|} / i] "abc")
   ; assert_equal "$babc"  ([%subst "A(B)C" / {|$$$1|} / i] "abcabc")
   ; assert_equal "$b$b"  ([%subst "A(B)C" / {|$$$1|} / g i] "abcabc")
+  ; assert_equal "$b$b"  ([%subst "A(B)C" / {|"$" ^ $1$|} / e g i] "abcabc")
 
 
 let suite = "Test pa_ppx_string" >::: [
