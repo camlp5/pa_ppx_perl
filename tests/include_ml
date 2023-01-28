@@ -30,7 +30,7 @@ Pcaml.inter_phrases := Some ";\n";;
 
 *)
 
-#require "camlp5.quotations";;
+#require "camlp5.parser_quotations";;
 #require "pa_ppx.testutils";;
 open Pa_ppx_testutils.Papr_util ;;
 #require "pa_ppx_perl";;

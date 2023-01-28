@@ -1,4 +1,4 @@
-(** -syntax camlp5o *)
+(** -syntax camlp5o $(MIGRATE_CFLAGS) -package pa_ppx.import,pa_ppx_migrate *)
 (* camlp5o *)
 (* pa_string.ml,v *)
 (* Copyright (c) INRIA 2007-2017 *)
@@ -8,8 +8,89 @@ open Pa_ppx_utils
 open Pa_passthru
 open Ppxutil
 
+
+exception Migration_error of string
+
+let migration_error feature =
+  raise (Migration_error feature)
+
+let _migrate_list subrw0 __dt__ l =
+  List.map (subrw0 __dt__) l
+
+[%%import: MLast.expr
+    [@add [%%import: MLast.loc]]
+    [@add [%%import: MLast.type_var]]
+    [@add [%%import: 'a Ploc.vala]]
+    [@with Ploc.vala := vala]
+]
+[@@deriving migrate
+    { dispatch_type = dispatch_table_t
+    ; dispatch_table_constructor = make_dt
+    ; default_dispatchers = [
+        {
+          srcmod = MLast
+        ; dstmod = MLast
+        ; types = [
+            class_infos
+          ; longid
+          ; ctyp
+          ; poly_variant
+          ; patt
+          ; expr
+          ; case_branch
+          ; module_type
+          ; functor_parameter
+          ; sig_item
+          ; with_constr
+          ; module_expr
+          ; str_item
+          ; type_decl
+          ; generic_constructor
+          ; extension_constructor
+          ; type_extension
+          ; class_type
+          ; class_sig_item
+          ; class_expr
+          ; class_str_item
+          ; longid_lident
+          ; payload
+          ; attribute_body
+          ; attribute
+          ; attributes_no_anti
+          ; attributes
+          ; type_var
+          ; vala
+          ]
+        }
+      ]
+    ; dispatchers = {
+        migrate_list = {
+          srctype = [%typ: 'a list]
+        ; dsttype = [%typ: 'b list]
+        ; code = _migrate_list
+        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
+        }
+      ; migrate_option = {
+          srctype = [%typ: 'a option]
+        ; dsttype = [%typ: 'b option]
+        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
+        ; code = (fun subrw __dt__ x -> Option.map (subrw __dt__) x)
+        }
+      ; migrate_loc = {
+          srctype = [%typ: loc]
+        ; dsttype = [%typ: MLast.loc]
+        ; code = fun __dt__ x -> x
+        }
+      }
+    }
+]
+
 let parse_expr s =
   Grammar.Entry.parse Pcaml.expr_eoi (Stream.of_string s)
+
+let parse_antiquot_expr s =
+    Ploc.call_with Plexer.force_antiquot_loc true
+    (Grammar.Entry.parse Pcaml.expr_eoi) (Stream.of_string s)
 
 module Match = struct
 
@@ -51,7 +132,7 @@ let build_regexp loc ~options restr =
     if case_insensitive then
       <:expr< [`Caseless] >>
     else <:expr< [] >> in
-  let regexp_expr = <:expr< Re.Perl.compile_pat ~{opts = $exp:compile_opt_expr$} $str:restr$ >> in
+  let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
   let result = build_result loc return_type ngroups use_exception in
   <:expr< let __re__ = $exp:regexp_expr$ in
           fun __subj__->
@@ -69,8 +150,8 @@ let rec build_result loc rty ngroups =
   let groupl = group0_exp::group_exps in
   let group_tuple = Expr.tuple loc groupl in
   let converter_fun_exp =
-    <:expr< fun [ `Text s -> `Text s
-                | `Delim __g__ -> `Delim $exp:group_tuple$ ] >> in
+    <:expr< function `Text s -> `Text s
+                | `Delim __g__ -> `Delim $exp:group_tuple$ >> in
   match rty with
     Nothing ->
      <:expr< Re.split __re__ __subj__ >>
@@ -99,7 +180,7 @@ let build_regexp loc ~options restr =
     if case_insensitive then
       <:expr< [`Caseless] >>
     else <:expr< [] >> in
-  let regexp_expr = <:expr< Re.Perl.compile_pat ~{opts = $exp:compile_opt_expr$} $str:restr$ >> in
+  let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
   let result = build_result loc return_type ngroups in
   <:expr< let __re__ = $exp:regexp_expr$ in
           fun __subj__->
@@ -120,7 +201,7 @@ let build_string loc patstr =
                     match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
                       (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
                     | (_, Some nstr, _, _)
-                    | (_, _, Some nstr, _) -> <:expr< match Re.Group.get_opt __g__ $int:nstr$ with [ None -> "" | Some s -> s ] >>
+                    | (_, _, Some nstr, _) -> <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
                     | (_, _, _, Some exps) ->
                        parse_expr exps
                     | _ -> Fmt.(raise_failwithf loc "pa_ppx_perl: unrecognized pattern: <<%a>>" Dump.string patstr)
@@ -128,7 +209,15 @@ let build_string loc patstr =
   let listexpr = convert_up_list_expr loc parts_exps in
   <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
 
-let build_expr loc patexpr = <:expr< fun __g__ -> $exp:patexpr$ >>
+let build_expr loc patstr =
+  let e = parse_antiquot_expr patstr in
+  <:expr< fun __g__ -> $exp:e$ >>
+
+let build_pattern loc ~options patstr =
+  if List.mem "e" options then
+    build_expr loc patstr
+  else
+    build_string loc patstr
 
 end
 
@@ -140,35 +229,38 @@ let extract_options e =
   (conv1 f)::(List.map conv1 l)
 
 let rewrite_match arg = function
-  <:expr:< [%"match" $str:s$ ;] >> -> Match.build_regexp loc ~options:[] s
-| <:expr:< [%"match" $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%match $str:s$ ;] >> -> Match.build_regexp loc ~options:[] s
+| <:expr:< [%match $str:s$ / $exp:optexpr$ ;] >> ->
    let options = extract_options optexpr in
    Match.build_regexp loc ~options s
 | _ -> assert false
 
 let rewrite_split arg = function
-  <:expr:< [%"split" $str:s$ ;] >> -> Split.build_regexp loc ~options:[] s
-| <:expr:< [%"split" $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%split $str:s$ ;] >> -> Split.build_regexp loc ~options:[] s
+| <:expr:< [%split $str:s$ / $exp:optexpr$ ;] >> ->
    let options = extract_options optexpr in
    Split.build_regexp loc ~options s
 | _ -> assert false
 
 let rewrite_pattern arg = function
-  <:expr:< [%"pattern" $str:s$ ;] >> -> Pattern.build_string loc s
-| <:expr:< [%"pattern" $exp:e$ ;] >> -> Pattern.build_expr loc e
-| _ -> assert false
+  <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~options:[] s
+| <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
+   let options = extract_options optexpr in
+   Pattern.build_pattern loc ~options s
+| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_pattern: unsupported extension <<%a>>"
+            Pp_MLast.pp_expr e)
 
 let install () = 
 let ef = EF.mk () in 
 let ef = EF.{ (ef) with
             expr = extfun ef.expr with [
-    <:expr:< [%"match" $exp:_$ ;] >> as z ->
+    <:expr:< [%match $exp:_$ ;] >> as z ->
     fun arg fallback ->
       Some (rewrite_match arg z)
-  | <:expr:< [%"split" $exp:_$ ;] >> as z ->
+  | <:expr:< [%split $exp:_$ ;] >> as z ->
     fun arg fallback ->
       Some (rewrite_split arg z)
-  | <:expr:< [%"pattern" $exp:_$ ;] >> as z ->
+  | <:expr:< [%pattern $exp:_$ ;] >> as z ->
     fun arg fallback ->
       Some (rewrite_pattern arg z)
   ] } in

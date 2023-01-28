@@ -57,7 +57,7 @@ The result is as in match regexps.
 ```
 
 ```
-[%pattern expr]
+[%pattern {|...expr...|} / e]
 ```
 
 type: `Re.Group.t -> string`
@@ -67,8 +67,10 @@ integer) and these will be replaced with calls to the N-th capture
 group (where None gets mapped to the emptry string).  Other instances
 of ${...} are treated as antiquotations and mapped to expressions.
 
-In the second case, the expression can contain $N$ (where N is an
-integer) and these are treated as $N above.
+In the second case, the expression is within a string, and can contain
+$N$ (where N is an integer) and these are treated as $N above.  The
+expression is parsed by the current parser, then that AST is used for
+the r.h.s. of the pattern.
 
 So both syntaxes support both capture-variables ($N/${N} vs. $N$) and
 antiquotations (${...} vs plain expressions)

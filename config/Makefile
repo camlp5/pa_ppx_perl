@@ -16,7 +16,7 @@ INCLUDES=
 OCAMLCFLAGS=$(DEBUG) $(WARNERR) $(INCLUDES)
 PACKAGES=camlp5,camlp5.extfun
 #PACKAGES := $(PACKAGES),camlp5.parser_quotations
-PACKAGES := $(PACKAGES),camlp5.quotations
+PACKAGES := $(PACKAGES),camlp5.parser_quotations
 SYNTAX = camlp5o
 PRPACKAGE = camlp5.pr_o
 

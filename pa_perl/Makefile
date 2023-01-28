@@ -8,7 +8,7 @@ include $(TOP)/config/Makefile
 DESTDIR=
 RM=rm
 
-PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base
+PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,camlp5.extend
 TARGET := pa_ppx_perl.cma
 ML := pa_perl.ml
 CMO := $(ML:.ml=.cmo)
@@ -16,6 +16,10 @@ CMI := $(ML:.ml=.cmi)
 CMX := $(ML:.ml=.cmx)
 CMT := $(ML:.ml=.cmt)
 CMTI := $(MLI:.mli=.cmti)
+
+export MIGRATE_CFLAGS= -ppopt -pa_import-I -ppopt . -ppopt -pa_passthru-debug \
+	-ppopt -pa_import-package -ppopt $(PACKAGES)
+export MIGRATE_PACKAGES=pa_ppx.import,pa_ppx_migrate
 
 all: $(TARGET) $(TARGET:.cma=.cmxa) camlp5.pa_ppx_perl camlp5.pa_ppx_perl.opt
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install

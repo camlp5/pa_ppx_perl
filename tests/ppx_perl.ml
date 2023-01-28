@@ -36,11 +36,10 @@ let test_delim_split ctxt =
 
 let test_patsubst ctxt =
   ()
-  ; assert_equal "abc"  (let s = "abc" in ([%pattern s] ([%match "abc"/exc] "abc")))
+  ; assert_equal "abc"  (let s = "abc" in ([%pattern "s" / e] ([%match "abc"/exc] "abc")))
   ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
-
 
 let suite = "Test pa_ppx_string" >::: [
       "simple_match"   >:: test_simple_match
