@@ -14,7 +14,7 @@ ML= \
 
 CMO := $(ML:.ml=.cmo)
 
-TESTS=ppx_perl.exe
+TESTS=ppx_perl.exe ya-wrap-ocamlfind
 
 all: $(TESTS)
 
@@ -24,8 +24,12 @@ test:: all
 ppx_perl.exe: ppx_perl.cmo
 	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
+
+ya-wrap-ocamlfind: ya_wrap_ocamlfind.ml
+	$(OCAMLFIND) ocamlc -linkall -linkpkg -package $(PACKAGES) $< -o $@
+
 clean::
-	rm -rf *.cm* _build *.exe
+	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind
 
 EXTERNAL := $(shell $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
 $(CMO) $(TESTS): $(EXTERNAL)
