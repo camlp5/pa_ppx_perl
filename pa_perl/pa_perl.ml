@@ -192,7 +192,8 @@ module Pattern = struct
 
 let string_parts_pattern = Re.Perl.compile_pat {|\$\$|\$([0-9]+)|\$\{([0-9]+)\}|\$\{([^}]+)\}|}
 
-let build_string loc patstr =
+let build_string loc ~force_cgroups patstr =
+  let has_cgroups = ref force_cgroups in
   let parts = Re.split_full string_parts_pattern patstr in
   let parts_exps =
     parts |> List.map (function
@@ -203,33 +204,43 @@ let build_string loc patstr =
                     match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
                       (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
                     | (_, Some nstr, _, _)
-                    | (_, _, Some nstr, _) -> <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+                    | (_, _, Some nstr, _) ->
+                       has_cgroups := true ;
+                       <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
                     | (_, _, _, Some exps) ->
                        parse_expr exps
                     | _ -> Fmt.(raise_failwithf loc "pa_ppx_perl: unrecognized pattern: <<%a>>" Dump.string patstr)
                ) in
   let listexpr = convert_up_list_expr loc parts_exps in
-  <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
+  if !has_cgroups then
+    <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
+  else
+    <:expr< String.concat "" $exp:listexpr$ >>
 
-let build_expr loc patstr =
+let build_expr ~force_cgroups loc patstr =
+  let has_cgroups = ref force_cgroups in
   let e = parse_antiquot_expr patstr in
   let dt = make_dt () in
   let old_migrate_expr = dt.migrate_expr in
   let migrate_expr dt = function
       ExXtr(loc, antiquot, _) ->
        let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
+       has_cgroups := true ;
        <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
     | e -> old_migrate_expr dt e in
   let dt = { dt with migrate_expr = migrate_expr } in
   let e = dt.migrate_expr dt e in
-  <:expr< fun __g__ -> $exp:e$ >>
+  if !has_cgroups then
+    <:expr< fun __g__ -> $exp:e$ >>
+  else
+    e
 
-let build_pattern loc ~options patstr =
+let build_pattern loc ~force_cgroups ~options patstr =
   let patstr = Scanf.unescaped patstr in
   if List.mem "e" options then
-    build_expr loc patstr
+    build_expr loc ~force_cgroups patstr
   else
-    build_string loc patstr
+    build_string loc ~force_cgroups patstr
 
 end
 
@@ -244,7 +255,7 @@ module Subst = struct
       <:expr< [`Caseless] >>
     else <:expr< [] >> in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let patexpr = Pattern.build_pattern loc ~options patstr in
+  let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options patstr in
   <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
 
 end
@@ -273,8 +284,8 @@ let rewrite_split arg = function
 let rewrite_pattern arg = function
   <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
    let options = extract_options optexpr in
-   Pattern.build_pattern loc ~options s
-| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~options:[] s
+   Pattern.build_pattern loc ~force_cgroups:false ~options s
+| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[] s
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_pattern: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 

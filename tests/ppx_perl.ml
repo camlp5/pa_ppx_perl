@@ -39,12 +39,14 @@ let test_string_pattern ctxt =
   ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
+  ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|}])
 
 let test_expr_pattern ctxt =
   ()
   ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc] "abc"))
   ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc] "abc"))
   ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc] "abc"))
+  ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e])
 
 let test_string_subst ctxt =
   ()
@@ -53,6 +55,8 @@ let test_string_subst ctxt =
   ; assert_equal "$babc"  ([%subst "A(B)C" / {|$$$1|} / i] "abcabc")
   ; assert_equal "$b$b"  ([%subst "A(B)C" / {|$$$1|} / g i] "abcabc")
   ; assert_equal "$b$b"  ([%subst "A(B)C" / {|"$" ^ $1$|} / e g i] "abcabc")
+  ; assert_equal "$$"  ([%subst "A(B)C" / {|"$"|} / e g i] "abcabc")
+  ; assert_equal "$$"  ([%subst "A(B)C" / {|$$|} / g i] "abcabc")
 
 let test_ocamlfind_bits ctxt =
   ()
