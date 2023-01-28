@@ -211,9 +211,21 @@ let build_string loc patstr =
 
 let build_expr loc patstr =
   let e = parse_antiquot_expr patstr in
+  Fmt.(pf stderr "build_expr: <<%a>>\n%!" Pp_MLast.pp_expr e) ;
+  let dt = make_dt () in
+  let old_migrate_expr = dt.migrate_expr in
+  let migrate_expr dt = function
+      ExXtr(loc, antiquot, _) ->
+       let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
+       <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+    | e -> old_migrate_expr dt e in
+  let dt = { dt with migrate_expr = migrate_expr } in
+  let e = dt.migrate_expr dt e in
   <:expr< fun __g__ -> $exp:e$ >>
 
 let build_pattern loc ~options patstr =
+  let patstr = Scanf.unescaped patstr in
+  Fmt.(pf stderr "build_pattern: <<%a>>\n%!" Dump.string patstr) ;
   if List.mem "e" options then
     build_expr loc patstr
   else

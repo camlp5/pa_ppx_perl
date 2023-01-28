@@ -33,20 +33,25 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text ""; `Delim"a"; `Text "b"; `Delim"a"]  ([%split "a"/ strings] "abaaba")
   ; assert_equal [`Delim("a",None); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("a",None)]  ([%split "a(c)?"/ strings] "abacba")
 
-
-let test_patsubst ctxt =
+let test_string_patsubst ctxt =
   ()
-  ; assert_equal "abc"  (let s = "abc" in ([%pattern "s" / e] ([%match "abc"/exc] "abc")))
   ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc] "abc"))
   ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
+
+let test_expr_patsubst ctxt =
+  ()
+  ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc] "abc"))
+  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc] "abc"))
+
 
 let suite = "Test pa_ppx_string" >::: [
       "simple_match"   >:: test_simple_match
     ; "search"   >:: test_search
     ; "simple_split"   >:: test_simple_split
     ; "delim_split"   >:: test_delim_split
-    ; "patsubst"   >:: test_patsubst
+    ; "string_patsubst"   >:: test_string_patsubst
+    ; "expr_patsubst"   >:: test_expr_patsubst
     ]
 
 let _ = 
