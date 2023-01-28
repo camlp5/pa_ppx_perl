@@ -7,10 +7,6 @@ let rec split_args cmd =
   | [] -> failwith "please supply input arguments"
 let split_args = split_args []
 
-let comment_pattern = Re.Perl.compile_pat "^\\(\\*\\*(.*?)\\*\\)"
-let envvar_pattern =
-  Re.Perl.compile_pat "(?:\\$\\(([^)]+)\\)|\\$\\{([^}]+)\\})"
-
 let envsubst s =
   let envlookup vname =
     match Sys.getenv_opt vname with
@@ -20,13 +16,22 @@ let envsubst s =
           (Printf.sprintf
              "ya_wrap_ocamlfind: environment variable <<%s>> not found" vname)
   in
-  let f g =
-    match Re.Group.get_opt g 1, Re.Group.get_opt g 2 with
-      None, None -> s
-    | Some v, _ -> envlookup v
-    | None, Some v -> envlookup v
+  let f s1 s2 =
+    if s1 <> "" then envlookup s1
+    else if s2 <> "" then envlookup s2
+    else assert false
   in
-  Re.replace ~all:true envvar_pattern ~f s
+  Re.replace ~all:true
+    (Re.Perl.compile_pat ~opts:[] "(?:\\$\\(([^)]+)\\)|\\$\\{([^}]+)\\})")
+    ~f:(fun __g__ ->
+       f
+         (match Re.Group.get_opt __g__ 1 with
+            None -> ""
+          | Some s -> s)
+         (match Re.Group.get_opt __g__ 2 with
+            None -> ""
+          | Some s -> s))
+    s
 
 let discover_args f =
   let f' = open_in f in
