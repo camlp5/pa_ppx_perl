@@ -211,7 +211,6 @@ let build_string loc patstr =
 
 let build_expr loc patstr =
   let e = parse_antiquot_expr patstr in
-  Fmt.(pf stderr "build_expr: <<%a>>\n%!" Pp_MLast.pp_expr e) ;
   let dt = make_dt () in
   let old_migrate_expr = dt.migrate_expr in
   let migrate_expr dt = function
@@ -225,7 +224,6 @@ let build_expr loc patstr =
 
 let build_pattern loc ~options patstr =
   let patstr = Scanf.unescaped patstr in
-  Fmt.(pf stderr "build_pattern: <<%a>>\n%!" Dump.string patstr) ;
   if List.mem "e" options then
     build_expr loc patstr
   else

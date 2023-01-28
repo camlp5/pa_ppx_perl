@@ -44,6 +44,7 @@ let test_expr_patsubst ctxt =
   ()
   ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc] "abc"))
   ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc] "abc"))
+  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc] "abc"))
 
 
 let suite = "Test pa_ppx_string" >::: [
