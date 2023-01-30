@@ -7,3 +7,5 @@ local-install
 META
 _build
 *ppo.ml
+mk_meta.ml
+mk_meta

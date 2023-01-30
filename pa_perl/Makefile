@@ -11,6 +11,7 @@ RM=rm
 PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,camlp5.extend
 TARGET := pa_ppx_perl.cma
 ML := pa_perl.ml
+TOOLSML = mk_meta.ml
 CMO := $(ML:.ml=.cmo)
 CMI := $(ML:.ml=.cmi)
 CMX := $(ML:.ml=.cmx)
@@ -32,17 +33,23 @@ camlp5.pa_ppx_perl: $(TARGET)
 camlp5.pa_ppx_perl.opt: $(TARGET:.cma=.cmxa)
 	$(MKCAMLP5OPT) -package fmt,re,camlp5.pa_r,camlp5.pr_r,pa_ppx.base $(TARGET:.cma=.cmxa) -o $@
 
-META: META.pl
-	./META.pl > META
+META: mk_meta
+	./mk_meta > META
 
-install::
+mk_meta: mk_meta.cmo
+	$(OCAMLFIND) ocamlc -linkpkg -linkall -package $(PACKAGES) $< -o $@
+
+mk_meta.ml: mk_meta.ML
+	cppo $< > $@
+
+install:: mk_meta
 	mkdir -p $(DESTDIR)/lib
-	./META.pl $(DESTDIR)/lib > META
+	./mk_meta -destdir $(DESTDIR)/lib > META
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
 	$(RM) -f META
 
 clean::
-	rm -rf META camlp5.pa_ppx_perl*
+	rm -rf META camlp5.pa_ppx_perl* mk_meta mk_meta.ml
 
 $(TARGET): $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) $(CMO) -a -o $(TARGET)

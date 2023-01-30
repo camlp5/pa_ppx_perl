@@ -18,6 +18,7 @@ depends: [
   "conf-perl"
   "conf-perl-ipc-system-simple"
   "conf-perl-string-shellquote"
+  "cppo"         {build}
   "camlp5"      { >= "8.00" }
   "pa_ppx"      { >= "0.08" }
   "not-ocamlfind" { >= "0.01" }
