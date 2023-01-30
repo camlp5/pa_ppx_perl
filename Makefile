@@ -21,13 +21,13 @@ sys:
 test: all
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
 
-META: META.pl
-	tests/mk_meta
-	./META.pl > META
+META: all
+	tests/join_meta -rewrite pa_ppx_perl_runtime:pa_ppx_perl.runtime \
+			-direct-include pa_perl \
+			-wrap-subdir runtime:runtime > META
 
-install: sys META.pl
+install: META
 	$(OCAMLFIND) remove pa_ppx_perl || true
-	./META.pl > META
 	$(OCAMLFIND) install pa_ppx_perl META local-install/lib/*/*.*
 
 uninstall:
