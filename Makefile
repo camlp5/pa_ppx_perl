@@ -22,6 +22,7 @@ test: all
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
 
 META: META.pl
+	tests/mk_meta
 	./META.pl > META
 
 install: sys META.pl

@@ -1,3 +1,7 @@
-ppx_perl.cmo ppx_perl.exe: ../local-install/lib/pa_ppx_perl/META
+ppx_perl.cmo ya_wrap_ocamlfind.cmo mk_meta.cmo ppx_perl.exe ya-wrap-ocamlfind mk_meta: ../local-install/lib/pa_ppx_perl/META
+mk_meta.cmo :
+mk_meta.cmx :
 ppx_perl.cmo :
 ppx_perl.cmx :
+ya_wrap_ocamlfind.cmo :
+ya_wrap_ocamlfind.cmx :
