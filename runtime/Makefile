@@ -11,6 +11,7 @@ RM=rm
 PACKAGES := fmt,camlp5
 TARGET := pa_ppx_perl_runtime.cma
 ML := runtime.ml
+TOOLSML = mk_meta.ml
 MLI := 
 CMO := $(ML:.ml=.cmo)
 CMI := $(ML:.ml=.cmi)
@@ -31,16 +32,23 @@ pa_ppx_perl.cmo: $(CMO)
 pa_ppx_perl.cmx: $(CMO:.cmo=.cmx)
 	$(OCAMLFIND) ocamlopt $(DEBUG) -pack -o pa_ppx_perl.cmx $^
 
-META: META.pl
-	./META.pl > META
-install::
+META: mk_meta
+	./mk_meta > META
+
+mk_meta: mk_meta.cmo
+	$(OCAMLFIND) ocamlc -linkpkg -linkall -package $(PACKAGES) $< -o $@
+
+mk_meta.ml: mk_meta.ML
+	cppo $< > $@
+
+install:: mk_meta
 	mkdir -p $(DESTDIR)/lib
-	./META.pl $(DESTDIR)/lib > META
+	./mk_meta -destdir $(DESTDIR)/lib > META
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl_runtime -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) pa_ppx_perl.cmx pa_ppx_perl.cmi $(wildcard *.cmt*)
 	$(RM) -f META
 
 clean::
-	rm -rf META camlp5.pa_ppx_perl
+	rm -rf META mk_meta mk_meta.ml
 
 $(TARGET): pa_ppx_perl.cmo
 	$(OCAMLFIND) ocamlc $(DEBUG) pa_ppx_perl.cmo -a -o $(TARGET)
