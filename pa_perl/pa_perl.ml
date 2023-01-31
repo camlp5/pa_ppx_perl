@@ -102,8 +102,12 @@ type t =
 | Expr
 | Group
 | Strings
-| StringGroups of int list
+| StringGroups of (int *bool) list
 | Exception [@@deriving show]
+
+let default_string_groups ngroups =
+  (Std.interval 0 (ngroups-1))
+  |> List.map (fun i -> if i = 0 then (0,true) else (i,false))
 
 let convert e =
   let conv1 e =
@@ -115,24 +119,29 @@ let convert e =
     | <:expr< e >> -> [Expr]
     | <:expr< g >> -> [Global]
     | <:expr< group >> -> [Group]
-    | <:expr< strings >> -> [Strings; StringGroups [0]]
+    | <:expr< strings >> -> [Strings]
     | <:expr< strings ( $list:l$ ) >> ->
        let l = l |> List.map (function
-                          <:expr< $int:n$ >> -> int_of_string n
+                          <:expr< $int:n$ >> -> (int_of_string n,false)
+                        | <:expr< ! $int:n$ >> -> (int_of_string n,true)
                         | _ -> badarg ()) in
-       [Strings; StringGroups (0::l)]
+       [Strings; StringGroups l]
     | <:expr< exc >> -> [Exception]
     | _ -> badarg() in
   let (f,l) = Expr.unapplist e in
   List.concat_map conv1 (f::l)
 
-let string_groups loc options =
-  if not (List.mem Strings  options) && not(List.mem Group options) then [0]
+let string_groups loc options ngroups =
+  if not (List.mem Strings  options) && not(List.mem Group options) then
+    default_string_groups ngroups
   else
   match List.find_map (function StringGroups l -> Some l | _ -> None) options with
     Some l -> l
-  | None -> Fmt.(raise_failwithf loc "Options.string_groups: internal error: <<%a>>" (list pp) options)
-
+  | None ->
+     if List.mem Strings options then
+       default_string_groups ngroups
+     else
+       Fmt.(raise_failwithf loc "Options.string_groups: internal error: <<%a>>" (list pp) options)
 end
 
 let compile_opts loc options =
