@@ -206,14 +206,10 @@ type return_type = RT_Nothing | RT_Strings | RT_Group
 
 let rec build_result loc ~options ngroups =
   let open Options in
-  let groupnums = Std.range (ngroups-1) in
-  let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
-  let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
-  let groupl = group0_exp::group_exps in
-  let group_tuple = Expr.tuple loc groupl in
+  let convf = Match.build_string_converter loc ~options ngroups in
   let converter_fun_exp =
     <:expr< function `Text s -> `Text s
-                | `Delim __g__ -> `Delim $exp:group_tuple$ >> in
+                | `Delim __g__ -> `Delim ($exp:convf$ __g__) >> in
   if List.mem Strings options then
     <:expr< List.map $exp:converter_fun_exp$ (Re.split_full __re__ __subj__) >>
   else if List.mem Group options then
