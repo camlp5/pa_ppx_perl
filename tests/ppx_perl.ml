@@ -17,6 +17,16 @@ let test_simple_match ctxt =
   ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc group i] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
+let test_selective_match ctxt =
+  ()
+  ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings (!0,1)] "abc")
+  ; assert_equal ("abc", "b")  ([%match "a(b)c"/exc strings (!0,!1)] "abc")
+  ; assert_equal "b"  ([%match "a(b)c"/exc strings !1] "abc")
+  ; assert_equal (Some ("abc", "b"))  ([%match "a(b)c"/ strings (!0,!1)] "abc")
+  ; assert_equal ("ac", None)  ([%match "a(b)?c"/exc strings (!0,1)] "ac")
+  ; assert_raises Not_found  (fun _ -> [%match "a(b)?c"/exc strings (!0,!1)] "ac")
+  ; assert_equal None  ([%match "a(b)?c"/ strings (!0,!1)] "ac")
+
 let test_search ctxt =
   ()
   ; assert_equal "abc"  ([%match "abc"/exc strings] "zzzabc")
@@ -103,6 +113,7 @@ let test_envsubst_via_replace ctxt =
 
 let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
+    ; "selective_match"   >:: test_selective_match
     ; "search"   >:: test_search
     ; "single"   >:: test_single
     ; "multiline"   >:: test_multiline

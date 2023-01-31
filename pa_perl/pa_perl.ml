@@ -110,26 +110,33 @@ let default_string_groups ngroups =
   |> List.map (fun i -> if i = 0 then (0,true) else (i,false))
 
 let convert e =
-  let conv1 e =
+  let rec conv l =
     let badarg() = Fmt.(raise_failwithf (MLast.loc_of_expr e) "extract_options: malformed option: <<%a>>" Pp_MLast.pp_expr e) in
-    match e with
-      <:expr< m >> -> [Multi]
-    | <:expr< s >> -> [Single]
-    | <:expr< i >> -> [Insensitive]
-    | <:expr< e >> -> [Expr]
-    | <:expr< g >> -> [Global]
-    | <:expr< group >> -> [Group]
-    | <:expr< strings >> -> [Strings]
-    | <:expr< strings ( $list:l$ ) >> ->
-       let l = l |> List.map (function
-                          <:expr< $int:n$ >> -> (int_of_string n,false)
-                        | <:expr< ! $int:n$ >> -> (int_of_string n,true)
-                        | _ -> badarg ()) in
-       [Strings; StringGroups l]
-    | <:expr< exc >> -> [Exception]
+    match l with
+      <:expr< m >>::l -> Multi::(conv l)
+    | <:expr< s >>::l -> Single::(conv l)
+    | <:expr< i >>::l -> Insensitive::(conv l)
+    | <:expr< e >>::l -> Expr::(conv l)
+    | <:expr< g >>::l -> Global::(conv l)
+    | <:expr< group >>::l -> Group::(conv l)
+    | <:expr< strings >>::<:expr< ( $list:gl$ ) >>::l ->
+       let gl = gl |> List.map (function
+                            <:expr< $int:n$ >> -> (int_of_string n,false)
+                          | <:expr< ! $int:n$ >> -> (int_of_string n,true)
+                          | _ -> badarg ()) in
+       Strings::(StringGroups gl)::(conv l)
+
+    | <:expr< strings >>::<:expr< $int:n$ >>::l ->
+       Strings::(StringGroups [(int_of_string n, false)])::(conv l)
+    | <:expr< strings >>::<:expr< ! $int:n$ >>::l ->
+       Strings::(StringGroups [(int_of_string n, true)])::(conv l)
+
+    | <:expr< strings >>::l -> Strings::(conv l)
+    | <:expr< exc >>::l -> Exception::(conv l)
+    | [] -> []
     | _ -> badarg() in
   let (f,l) = Expr.unapplist e in
-  List.concat_map conv1 (f::l)
+  conv (f::l)
 
 let string_groups loc options ngroups =
   if not (List.mem Strings  options) && not(List.mem Group options) then
@@ -159,12 +166,14 @@ module Match = struct
 
 let build_string_converter loc ~options ngroups =
   let open Options in
-  let string_groups = Options.string_groups loc options in
-  let groupnums = Std.range (ngroups-1) in
-  let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
-  let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
-  let groupl = group0_exp::group_exps in
-  let group_tuple = Expr.tuple loc groupl in
+  let string_groups = Options.string_groups loc options ngroups in
+  let group_exp (n,required) =
+    if required then
+      <:expr< Re.Group.get __g__ $int:string_of_int n$ >>
+    else
+      <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >> in
+  let group_exps = List.map group_exp string_groups in
+  let group_tuple = Expr.tuple loc group_exps in
   <:expr< (fun __g__ -> $exp:group_tuple$ ) >>
 
 let rec build_result loc ~options ngroups use_exception =
@@ -181,7 +190,10 @@ let rec build_result loc ~options ngroups use_exception =
        <:expr< $exp:convf$ $exp:res$ >>
      else
        let res = build_result loc ~options:[Group] ngroups false in
-       <:expr< Option.map $exp:convf$ $exp:res$ >>
+       <:expr< match Option.map $exp:convf$ $exp:res$ with
+                 exception Not_found -> None
+               | rv -> rv
+                 >>
 
 let build_regexp loc ~options restr =
   let open Options in
