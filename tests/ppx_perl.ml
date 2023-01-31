@@ -66,6 +66,9 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text "b"; `Delim"a"]  ([%split "a"/ strings] "ababa")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text ""; `Delim"a"; `Text "b"; `Delim"a"]  ([%split "a"/ strings] "abaaba")
   ; assert_equal [`Delim("a",None); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("a",None)]  ([%split "a(c)?"/ strings] "abacba")
+  ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")]  ([%split "a(c)"/ strings] "acbacbac")
+  ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"]  ([%split "a(c)"/ strings !1] "acbacbac")
+  ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"]  ([%split "a(c)?"/ strings !0] "abacba")
 
 let test_string_pattern ctxt =
   ()
