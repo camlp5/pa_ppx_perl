@@ -146,8 +146,6 @@ let compile_opts loc options =
 
 module Match = struct
 
-type return_type = RT_Strings | RT_Group
-
 let rec build_result loc ~options ngroups use_exception =
   let open Options in
   let groupnums = Std.range (ngroups-1) in
@@ -170,11 +168,11 @@ let rec build_result loc ~options ngroups use_exception =
 
 let build_regexp loc ~options restr =
   let open Options in
+  if List.mem Strings options && List.mem Group options then
+    Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
+           (list Options.pp) options)
+  else
   let use_exception = List.mem Exception options in
-  let _ =
-    if List.mem Strings options && List.mem Group options then
-      Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
-             (list Options.pp) options) in
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
   let compile_opt_expr = compile_opts loc options in
@@ -189,7 +187,8 @@ module Split = struct
 
 type return_type = RT_Nothing | RT_Strings | RT_Group
 
-let rec build_result loc rty ngroups =
+let rec build_result loc ~options ngroups =
+  let open Options in
   let groupnums = Std.range (ngroups-1) in
   let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
   let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
@@ -198,33 +197,29 @@ let rec build_result loc rty ngroups =
   let converter_fun_exp =
     <:expr< function `Text s -> `Text s
                 | `Delim __g__ -> `Delim $exp:group_tuple$ >> in
-  match rty with
-    RT_Nothing ->
-     <:expr< Re.split __re__ __subj__ >>
-  | RT_Strings ->
-     <:expr< List.map $exp:converter_fun_exp$ (Re.split_full __re__ __subj__) >>
-  | RT_Group ->
-     <:expr< Re.split_full __re__ __subj__ >>
+  if List.mem Strings options then
+    <:expr< List.map $exp:converter_fun_exp$ (Re.split_full __re__ __subj__) >>
+  else if List.mem Group options then
+    <:expr< Re.split_full __re__ __subj__ >>
+  else
+    <:expr< Re.split __re__ __subj__ >>
 
 let build_regexp loc ~options restr =
   let open Options in
+  if List.mem Strings options && List.mem Group options then
+    Fmt.(raise_failwithf loc "Split.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
+           (list Options.pp) options)
+  else
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
-  let return_type =
-    match (List.mem Strings options, List.mem Group options) with
-      (false, false) when ngroups=1 -> RT_Nothing
-    | (false, false) ->
-       Fmt.(raise_failwithf loc "Split.build_regexp: must specify one of <<strings>>, <<group>> for regexp with capture groups: %a"
-              (list Options.pp) options)
-    | (true, false) -> RT_Strings
-    | (false, true) -> RT_Group
-    | _ ->
-       Fmt.(raise_failwithf loc "Split.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
-            (list Options.pp) options) in
+  if ngroups > 1 && not (List.mem Strings options || List.mem Group options) then
+    Fmt.(raise_failwithf loc "Split.build_regexp: must specify one of <<strings>>, <<group>> for regexp with capture groups: %a"
+           (list Options.pp) options)
+  else
 
   let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let result = build_result loc return_type ngroups in
+  let result = build_result loc ~options ngroups in
   <:expr< let __re__ = $exp:regexp_expr$ in
           fun __subj__->
             $exp:result$ >>
