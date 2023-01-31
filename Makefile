@@ -22,7 +22,7 @@ test: all
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
 
 META: all
-	tests/join_meta -rewrite pa_ppx_perl_runtime:pa_ppx_perl.runtime \
+	$(JOINMETA) -rewrite pa_ppx_perl_runtime:pa_ppx_perl.runtime \
 			-direct-include pa_perl \
 			-wrap-subdir runtime:runtime > META
 

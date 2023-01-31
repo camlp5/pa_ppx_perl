@@ -6,6 +6,7 @@ RM=rm
 OCAMLFIND=ocamlfind
 LAUNCH=env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH --
 YAWRAP=ocamlfind camlp5-buildscripts/ya-wrap-ocamlfind
+JOINMETA=ocamlfind camlp5-buildscripts/join_meta
 NOT_OCAMLFIND=$(LAUNCH) not-ocamlfind
 OCAMLTOPLEVEL=ocaml
 CAMLP5LIB=$(shell $(OCAMLFIND) query camlp5)
