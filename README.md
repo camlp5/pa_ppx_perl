@@ -1,5 +1,4 @@
-
-Some notes on these extensions
+# `pa_ppx_perl`: a PPX Rewriter for Perl-ish regexp operations
 
 
 ## Match regexps
@@ -15,8 +14,10 @@ string -> result
 
 Modifiers
 
-`i`: case-insensitive matching
-`opt`: use option for match-failure instead of exception
+`i`:: case-insensitive matching
+`exc`:: use exception match-failure instead option
+`group`:: return the `Re.Group.t` object
+`strings`:: [DEFAULT] return tuple of `string option` components for capture group
 
 The type of result varies depending whether we're using exceptions for
 match-failure or not.
@@ -60,7 +61,8 @@ The result is as in match regexps.
 [%pattern {|...expr...|} / e]
 ```
 
-type: `Re.Group.t -> string`
+type: if the pattern uses any capture-group expressions (viz. `$1`, or `$1$`) then `Re.Group.t -> string`
+else `string`.
 
 In the first case, the pattern can contain $N or ${N} (where N is an
 integer) and these will be replaced with calls to the N-th capture
@@ -96,6 +98,6 @@ s/re/pat/
 
 Modifiers
 
-`i` : case-insensitive matching
-`g` : replace all matches
-`e` : pattern is an OCaml expression
+`i` :: case-insensitive matching
+`g` :: replace all matches
+`e` :: pattern is an OCaml expression

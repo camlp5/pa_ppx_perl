@@ -4,8 +4,8 @@ open OUnit2
 
 let test_simple_match ctxt =
   ()
-  ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc] "abc") 0)
   ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc group] "abc") 0)
+  ; assert_equal (Some "abc")  ([%match "abc"] "abc")
   ; assert_equal (Some "abc")  ([%match "abc"/strings] "abc")
   ; assert_equal None  ([%match "abc"] "abd")
   ; assert_raises Not_found (fun () -> [%match "abc"/exc] "abd")
@@ -14,7 +14,7 @@ let test_simple_match ctxt =
   ; assert_equal "abc"  ([%match "abc"/exc strings] "abc")
   ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings] "abc")
   ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings] "ac")
-  ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc i] "abc") 0)
+  ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc group i] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
 let test_search ctxt =
@@ -59,17 +59,17 @@ let test_delim_split ctxt =
 
 let test_string_pattern ctxt =
   ()
-  ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc] "abc"))
-  ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc] "abc"))
-  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
-  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc] "abc"))
+  ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc group] "abc"))
+  ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc group] "abc"))
+  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc group] "abc"))
+  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc group] "abc"))
   ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|}])
 
 let test_expr_pattern ctxt =
   ()
-  ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc] "abc"))
-  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc] "abc"))
-  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc] "abc"))
+  ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc group] "abc"))
+  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc group] "abc"))
+  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc group] "abc"))
   ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e])
 
 let test_string_subst ctxt =

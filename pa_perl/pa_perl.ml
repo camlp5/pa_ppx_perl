@@ -128,7 +128,7 @@ let build_regexp loc ~options restr =
   let use_exception = List.mem "exc" options in
   let return_type =
     match (List.mem "strings" options, List.mem "group" options) with
-      (false, false) -> Group
+      (false, false) -> Strings
     | (true, false) -> Strings
     | (false, true) -> Group
     | _ ->
