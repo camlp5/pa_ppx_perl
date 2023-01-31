@@ -8,7 +8,7 @@ WD=$(shell pwd)
 DESTDIR=
 RM=rm
 
-SYSDIRS= tools runtime pa_perl
+SYSDIRS= runtime pa_perl
 
 TESTDIRS= tests
 

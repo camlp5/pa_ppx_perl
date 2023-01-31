@@ -3,9 +3,9 @@
 
 RM=rm
 
-YAWRAP=$(TOP)/tools/ya-wrap-ocamlfind
-LAUNCH=env TOP=$(TOP) $(TOP)/tools/LAUNCH
 OCAMLFIND=ocamlfind
+LAUNCH=env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH --
+YAWRAP=ocamlfind camlp5-buildscripts/ya-wrap-ocamlfind
 NOT_OCAMLFIND=$(LAUNCH) not-ocamlfind
 OCAMLTOPLEVEL=ocaml
 CAMLP5LIB=$(shell $(OCAMLFIND) query camlp5)

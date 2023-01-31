@@ -2,9 +2,6 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile
 
-LAUNCH=../tools/LAUNCH
-OCAMLFIND=$(LAUNCH) ocamlfind
-NOT_OCAMLFIND=$(LAUNCH) not-ocamlfind
 SYNTAX := camlp5o
 
 PACKAGES := $(PACKAGES),pa_ppx_perl,ounit2,pa_ppx.utils
