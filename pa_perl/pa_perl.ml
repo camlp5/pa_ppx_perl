@@ -125,6 +125,12 @@ let convert e =
     | _ -> badarg() in
   let (f,l) = Expr.unapplist e in
   List.concat_map conv1 (f::l)
+
+let string_groups options =
+  match List.find_map (function StringGroups l -> Some l | _ -> None) options with
+    Some l -> l
+  | None -> failwith "Options.string_groups: internal error"
+
 end
 
 let compile_opts loc options =
@@ -142,41 +148,38 @@ module Match = struct
 
 type return_type = RT_Strings | RT_Group
 
-let rec build_result loc rty ngroups use_exception =
+let rec build_result loc ~options ngroups use_exception =
+  let open Options in
   let groupnums = Std.range (ngroups-1) in
   let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
   let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
   let groupl = group0_exp::group_exps in
   let group_tuple = Expr.tuple loc groupl in
-  match (rty, use_exception) with
-    (RT_Group, false) ->
-     <:expr< Re.exec_opt __re__ __subj__ >>
-  | (RT_Group, true) ->
-     <:expr< Re.exec __re__ __subj__ >>
-  | (RT_Strings, true) ->
-     let res = build_result loc RT_Group ngroups true in
-     <:expr< (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
-  | (RT_Strings, false) ->
-     let res = build_result loc RT_Group ngroups false in
-     <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
+  if List.mem Group options then
+     if use_exception then
+       <:expr< Re.exec __re__ __subj__ >>
+     else
+       <:expr< Re.exec_opt __re__ __subj__ >>
+  else
+     if use_exception then
+       let res = build_result loc ~options:[Group] ngroups true in
+       <:expr< (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
+     else
+       let res = build_result loc ~options:[Group] ngroups false in
+       <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
 
 let build_regexp loc ~options restr =
   let open Options in
   let use_exception = List.mem Exception options in
-  let return_type =
-    match (List.mem Strings options, List.mem Group options) with
-      (false, false) -> RT_Strings
-    | (true, false) -> RT_Strings
-    | (false, true) -> RT_Group
-    | _ ->
-       Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
-            (list Options.pp) options) in
-
+  let _ =
+    if List.mem Strings options && List.mem Group options then
+      Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
+             (list Options.pp) options) in
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
   let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let result = build_result loc return_type ngroups use_exception in
+  let result = build_result loc ~options ngroups use_exception in
   <:expr< let __re__ = $exp:regexp_expr$ in
           fun __subj__->
             $exp:result$ >>
