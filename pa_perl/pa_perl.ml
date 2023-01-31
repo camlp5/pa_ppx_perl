@@ -126,10 +126,12 @@ let convert e =
   let (f,l) = Expr.unapplist e in
   List.concat_map conv1 (f::l)
 
-let string_groups options =
+let string_groups loc options =
+  if not (List.mem Strings  options) && not(List.mem Group options) then [0]
+  else
   match List.find_map (function StringGroups l -> Some l | _ -> None) options with
     Some l -> l
-  | None -> failwith "Options.string_groups: internal error"
+  | None -> Fmt.(raise_failwithf loc "Options.string_groups: internal error: <<%a>>" (list pp) options)
 
 end
 
@@ -146,25 +148,31 @@ let compile_opts loc options =
 
 module Match = struct
 
-let rec build_result loc ~options ngroups use_exception =
+let build_string_converter loc ~options ngroups =
   let open Options in
+  let string_groups = Options.string_groups loc options in
   let groupnums = Std.range (ngroups-1) in
   let group_exps = groupnums |> List.map (fun n -> <:expr< Re.Group.get_opt __g__ $int:string_of_int n$ >>) in
   let group0_exp = <:expr< Re.Group.get __g__ 0 >> in
   let groupl = group0_exp::group_exps in
   let group_tuple = Expr.tuple loc groupl in
+  <:expr< (fun __g__ -> $exp:group_tuple$ ) >>
+
+let rec build_result loc ~options ngroups use_exception =
+  let open Options in
   if List.mem Group options then
      if use_exception then
        <:expr< Re.exec __re__ __subj__ >>
      else
        <:expr< Re.exec_opt __re__ __subj__ >>
   else
+    let convf = build_string_converter loc ~options ngroups in
      if use_exception then
        let res = build_result loc ~options:[Group] ngroups true in
-       <:expr< (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
+       <:expr< $exp:convf$ $exp:res$ >>
      else
        let res = build_result loc ~options:[Group] ngroups false in
-       <:expr< Option.map (fun __g__ -> $exp:group_tuple$ ) $exp:res$ >>
+       <:expr< Option.map $exp:convf$ $exp:res$ >>
 
 let build_regexp loc ~options restr =
   let open Options in
