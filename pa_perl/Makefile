@@ -8,7 +8,7 @@ include $(TOP)/config/Makefile
 DESTDIR=
 RM=rm
 
-PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,camlp5.extend
+PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,camlp5.extend,pa_ppx.deriving_plugins.std
 TARGET := pa_ppx_perl.cma
 ML := pa_perl.ml
 TOOLSML = mk_meta.ml
