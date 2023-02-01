@@ -243,6 +243,14 @@ There are four kinds of modifiers, and different kinds are allowed for different
 ** `s`: treat string being matched as a single line (like Perl `/s`)
 ** `m`: treat string being matched as multiple lines (like Perl `/m`)
 
+* regexp output modifiers: allowed for `match`, `split`
+
+** `group`: return a `Re.Group.t`
+
+** `strings`: return a tuple of `string option` for each capture-group
+
+*** `exc`: raise `Not_found` if the regexp does not match or mandatory
+    capture-groups did not match.
 
 == The supported PPX extensions
 
