@@ -276,8 +276,9 @@ groups of the regexp.  So the result type of a regexp match should be
 With the `exc` modifier (which causes `Not_found` to be raised on
 match failure), this becomes `Re.Group.t`.
 
-But a `Re.Group.t` is a complex object and we might want something
-more *transparent*.  A natural thing to want, is a tuple of all the
+To get these result types, we use the modifier `group`.  But a
+`Re.Group.t` is a complex object and we might want something more
+*transparent*.  A natural thing to want, is a tuple of all the
 capture-groups.  So let's consider a regexp: `(a)?(b)(c)?`.  This
 regexp has *four* capture groups:
 
@@ -294,7 +295,7 @@ matches, but let's ignore that for now.  So a *transparent* type for a
 ```
 string * string option * string option * string option
 ```
-and a *transparent type the result of a regexp match (which might fail) would be
+and a *transparent* type the result of a regexp match (which might fail) would be
 ```
 (string * string option * string option * string option) option
 ```
