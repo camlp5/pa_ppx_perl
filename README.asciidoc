@@ -1,0 +1,241 @@
+`pa_ppx_perl`: a PPX Rewriter for Perl-ish regexp operations
+============================================================
+
+OCaml has support for regular expressions using a number of different
+packages: `str`, `pcre`, and `re`.  These all present a functional
+interface with a number of different verbs and data-types, and any
+sort of nontrivial pattern-matching or match-and-replace involves
+significant code that can fairly be described as boilerplate.  This
+code is a pain to read/understand and to maintain as requirements
+change.
+
+By contrast, in Perl regular expressions are integrated into the
+language, in such a way that matching, extracting substrings, and
+match-and-replace are compactly expressed with little superfluous
+boilerplate.  The result is that, once one has a grasp of the syntax
+of regular expression *integration into the language*, the use of
+regexps in Perl is transparent in a way that is difficult-to-match in
+other languages.
+
+This package is a first attempt to bring that level of transparency to
+OCaml.  This package supports:
+
+* regexp matching (`[%match ....]`)
+* splitting with regexps (`[%split ....]`)
+* pattern-substitution with the result of regexp matching or OCaml string-typed variables (`[%pattern ...]`)
+* match-and-replace either once or globally (`[%subst ...]`)
+
+All of these transparent syntax for "modifiers" in the style of Perl's
+modifiers, and a few extra ones for OCaml specifically.
+
+To introduce the capabilities of this package, I'll first provide
+examples, and then explain the syntax and capabilities of the
+system. As always, the tests are an excellent place to look usage
+hints.
+
+== Installation
+
+To install, it should suffice to `opam install pa_ppx_perl`; from
+source, `make all install` in the top-level directory should do the
+trick.
+
+== Invocation
+
+To invoke the PPX rewriter for a source file, the package
+`pa_ppx_perl` must be specified, viz.
+
+```
+ocamlfind ocamlc -package pa_ppx_perl -c -syntax camlp5o ppx_perl.ml
+```
+and similarly when linking (there is a small runtime support package required
+```
+ocamlfind ocamlc -package pa_ppx_perl -linkpkg -linkall -o ppx_perl.exe ppx_perl.cmo
+```
+
+== Examples
+
+A match regexp with capture groups::
+
+In Perl we can break the "shebang" line in `$x` into a directory and
+the filename in that directory:
+
+```
+$x =~ m,^#!(\S+)/([^/\s]+),
+```
+
+And afterwards, we can use `$&` for the entire matched string, `$1`
+for the directory part, and `$2` for the filename part.
+
+In OCaml we can write:
+
+```
+[%match {|^#!(\S+)/([^/\s]+)|}]
+```
+of type
+```
+string -> (string * string option * string option) option
+```
+
+This corresponds to the entire match, both capture groups (which might
+be empty), and of course the argument string might not match the
+regexp.  Later we'll see how to simplify this.
+
+Splitting a string with a regexp::
+
+In Perl we can split a string with a regexp:
+
+```
+$x = "abcdaceabc" ;
+split(/ab?c/, $x);
+```
+
+which returns the list `("", "d", "e")`
+
+In OCaml we can write:
+
+```
+[%split {|ab?c|}] "abcdaceabc"
+```
+which returns the list `["d"; "e"]`.
+
+NOTE WELL: there's a discrepancy here between Perl and OCaml's `re`.
+
+In Perl we can also use capture-groups with a split:
+
+
+```
+$x = "abcdaceabc" ;
+split(/a(b)?c/, $x);
+```
+which returns the list `['','b','d',undef,'e','b']`.
+
+In OCaml, we can write
+```
+[%split {|a(b)?c|} / strings] "abcdaceabc"
+```
+which returns the list
+```
+[`Delim ("abc", Some "b"); `Text "d"; `Delim ("ac", None); `Text "e";
+ `Delim ("abc", Some "b")]
+```
+
+This is much more complicated, so let's walk thru it:
+
+* first, the delimiter, "abc", with the matched string, and then the (matched) capture-group.
+* then the text "d"
+* then the delimiter "ac" with an unmatched capture-group.
+* then the text "e"
+* then the delimiter "abc" again, with the matched capture group.
+
+This is a lot of work, when we might not want it all, so there's a way
+of limiting the amount of extracted substrings, that we'll come to
+later.
+
+NOTE the "strings" above. We'll come to this later on.
+
+
+
+== The supported PPX extensions
+
+
+
+=== Match regexps
+
+```
+[%match {|...re...|}]
+```
+
+type:
+```
+string -> result
+```
+
+Modifiers
+
+`i`:: case-insensitive matching
+`exc`:: use exception match-failure instead option
+`group`:: return the `Re.Group.t` object
+`strings`:: [DEFAULT] return tuple of `string option` components for capture group
+
+The type of result varies depending whether we're using exceptions for
+match-failure or not.
+
+If using exceptions, then the type of result is:
+```
+string * string option * ... * string option
+```
+
+where the # of `string option` corresponds to the # of actual capture groups in the regexp.
+
+If using option, then the type of result is as above, but wrapped in an `option`.
+For a regexp without any captures, this becomes `string option`
+
+=== Split
+
+```
+[%split {|re-without-captures|}]
+```
+
+type: `string -> string list`
+
+```
+[%split {|re-with-captures|}]
+```
+
+type: 
+```
+string -> [`Text of string | `Delim of result]
+```
+
+The result is as in match regexps.
+
+=== Substitution Patterns
+
+```
+[%pattern {|...pattern...|}]
+```
+
+```
+[%pattern {|...expr...|} / e]
+```
+
+type: if the pattern uses any capture-group expressions (viz. `$1`, or `$1$`) then `Re.Group.t -> string`
+else `string`.
+
+In the first case, the pattern can contain $N or ${N} (where N is an
+integer) and these will be replaced with calls to the N-th capture
+group (where None gets mapped to the emptry string).  Other instances
+of ${...} are treated as antiquotations and mapped to expressions.
+
+In the second case, the expression is within a string, and can contain
+$N$ (where N is an integer) and these are treated as $N above.  The
+expression is parsed by the current parser, then that AST is used for
+the r.h.s. of the pattern.
+
+So both syntaxes support both capture-variables ($N/${N} vs. $N$) and
+antiquotations (${...} vs plain expressions)
+
+=== Match-and-replace
+
+```
+[%subst {|...re...|} / {|...pattern...|}]
+```
+
+```
+[%subst {|...re...|} / {|...pattern...|} / ...modifiers...]
+```
+
+type: `string -> string`
+
+This combines match-regexps and substitutions-patterns, and should be
+understood as like the perl
+
+```
+s/re/pat/
+```
+
+Modifiers
+
+`i` :: case-insensitive matching
+`g` :: replace all matches
+`e` :: pattern is an OCaml expression
