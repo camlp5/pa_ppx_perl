@@ -239,9 +239,9 @@ There are four kinds of modifiers, and different kinds are allowed for different
 
 * regexp compile-time modifiers: allowed for `match`, `split`, `subst`
 
-  * `i`: case-insensitive regexp
-  * `s`: treat string being matched as a single line (like Perl `/s`)
-  * `m`: treat string being matched as multiple lines (like Perl `/m`)
+** `i`: case-insensitive regexp
+** `s`: treat string being matched as a single line (like Perl `/s`)
+** `m`: treat string being matched as multiple lines (like Perl `/m`)
 
 
 == The supported PPX extensions
