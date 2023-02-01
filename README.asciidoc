@@ -222,6 +222,19 @@ pattern that does have capture-groups has type `Re.Group.t -> string`
 (since those capture-groups will have to be taken from some
 already-matched regexp, and a matched regexp produces a `Re.Group.t`).
 
+== The high-level syntax of these extensions
+
+The extensions all have common syntax aspects.  Extensions look like:
+
+* `[%match *regexp*]`
+* `[%match *regexp* / *modifiers*]`
+* `[%split *regexp*]`
+* `[%split *regexp* / *modifiers*]`
+* `[%pattern *pattern*]`
+* `[%pattern *pattern* / *modifiers*]`
+* `[%subst *regexp* / *pattern*]`
+* `[%subst *regexp* / *pattern* / *modifiers*]`
+
 == The supported PPX extensions
 
 
