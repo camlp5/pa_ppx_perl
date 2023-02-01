@@ -271,7 +271,7 @@ A regexp, when applied to some input string, can match, or fail to
 match.  The most primitive result it can produce is a `Re.Group.t`,
 which holds the substrings of the input that matched the capture
 groups of the regexp.  So the result type of a regexp match should be
-``` Re.Group.t option ```
+`Re.Group.t option`
 
 With the `exc` modifier (which causes `Not_found` to be raised on
 match failure), this becomes `Re.Group.t`.
