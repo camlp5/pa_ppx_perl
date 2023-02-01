@@ -249,8 +249,16 @@ There are four kinds of modifiers, and different kinds are allowed for different
 
 ** `strings`: return a tuple of `string option` for each capture-group
 
-*** `exc`: raise `Not_found` if the regexp does not match or mandatory
+** `exc`: raise `Not_found` if the regexp does not match or mandatory
     capture-groups did not match.
+
+* pattern modifiers: allowed for `pattern` and `subst`
+
+** `e`: the pattern is an OCaml expression, not a string
+
+* substitution modifiers: allowed for `subst`
+
+** `g`: apply the substitution to every occurrence of the regexp, not just the first one
 
 == The supported PPX extensions
 
