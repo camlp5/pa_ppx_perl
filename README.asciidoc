@@ -186,7 +186,41 @@ NOTE the difference in the way that capture-groups are named in the
 pattern vs. in the expression.  This is due to the need to conform to
 Camlp5 antiquotation syntax.
 
+=== patterns
 
+Implicit in Perl's `s/re/pat/` match-and-replace operation is the idea
+of a *pattern*.  Such a pattern can be either a string with
+antiquotations for variables and capture-groups, or a Perl expression
+with antiquotations for capture-groups (since expressions already
+include variables).  So in OCaml we have a type of "pattern" for this,
+and we've already seen both kinds just above.
+
+First there are strings with antiquotations for variables and capture-groups:
+
+```
+[%pattern {|<<$1>>|}}
+```
+or
+```
+{|${lhs}$1${rhs}|}]
+```
+and then there expression with antiquotations for capture-groups:
+```
+[%pattern {|lhs ^ $1$ ^ rhs|} / e]
+```
+
+NOTE that just as in Perl `s///`, to indicate that the pattern is an
+expression, we use the "modifier `e`.
+
+In a string pattern, antiquotations are either `${varname}` or (for
+capture groups) `$N` (or `${N}`) (where `N` is an integer constant).
+In an expression variables are already expressible, and capture groups
+are expressed as `$N$` (where `N` is an integer constant).
+
+A pattern that doesn't have any capture-groups has type `string`; a
+pattern that does have capture-groups has type `Re.Group.t -> string`
+(since those capture-groups will have to be taken from some
+already-matched regexp, and a matched regexp produces a `Re.Group.t`).
 
 == The supported PPX extensions
 
