@@ -115,7 +115,10 @@ In OCaml, we can write
 ```
 which returns the list
 ```
-[`Delim ("abc", Some "b"); `Text "d"; `Delim ("ac", None); `Text "e";
+[`Delim ("abc", Some "b");
+ `Text "d";
+ `Delim ("ac", None);
+ `Text "e";
  `Delim ("abc", Some "b")]
 ```
 
@@ -133,7 +136,42 @@ later.
 
 NOTE the "strings" above. We'll come to this later on.
 
+match-and-replace with a regexp/pattern::
 
+In Perl we can match-and-replace:
+
+```
+$x = "abc\nabc"; $x =~ s,a(bc),<<$1>>,;
+```
+and afterward, `$x` has value `"<<bc>>\nabc"`.
+
+In OCaml we can do the same:
+
+```
+[%subst {|a(bc)|} / {|<<$1>>|}] "abc\nabc"
+```
+with value `"<<bc>>\nabc"`.
+
+In Perl instead of a *pattern* for the right-hand-side of the
+substition, we can use a Perl expression, in which special variables
+can be used to access the capture-groups:
+
+```
+$lhs = "<<" ; $rhs = ">>" ;
+$x = "abc\nabc"; $x =~ s,a(bc),$lhs . $1 . $rhs,e;
+```
+
+and likewise in OCaml:
+
+```
+let lhs = "<<" ;;
+let rhs = ">>" ;;
+[%subst {|a(bc)|} / {|lhs ^ $1$ ^ rhs|} / e] "abc\nabc"
+```
+
+NOTE the difference in the way that capture-groups are named in the
+pattern vs. in the expression.  This is due to the need to conform to
+Camlp5 antiquotation syntax.
 
 == The supported PPX extensions
 
