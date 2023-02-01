@@ -235,6 +235,15 @@ The extensions all have common syntax aspects.  Extensions look like:
 * `[%subst *regexp* / *pattern*]`
 * `[%subst *regexp* / *pattern* / *modifiers*]`
 
+There are four kinds of modifiers, and different kinds are allowed for different extensions:
+
+* regexp compile-time modifiers: allowed for `match`, `split`, `subst`
+
+  * `i`: case-insensitive regexp
+  * `s`: treat string being matched as a single line (like Perl `/s`)
+  * `m`: treat string being matched as multiple lines (like Perl `/m`)
+
+
 == The supported PPX extensions
 
 
