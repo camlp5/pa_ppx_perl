@@ -243,14 +243,19 @@ There are four kinds of modifiers, and different kinds are allowed for different
 ** `s`: treat string being matched as a single line (like Perl `/s`)
 ** `m`: treat string being matched as multiple lines (like Perl `/m`)
 
+`m` and `s` are mutually-exclusive
+
 * regexp output modifiers: allowed for `match`, `split`
+
+** `exc`: raise `Not_found` if the regexp does not match or mandatory
+    capture-groups did not match.
 
 ** `group`: return a `Re.Group.t`
 
 ** `strings`: return a tuple of `string option` for each capture-group
 
-** `exc`: raise `Not_found` if the regexp does not match or mandatory
-    capture-groups did not match.
+`group` and `strings` are mutually-exclusive.  Also, `strings` can
+take parameters, which are explained below.
 
 * pattern modifiers: allowed for `pattern` and `subst`
 
