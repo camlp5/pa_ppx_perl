@@ -1,5 +1,7 @@
 `pa_ppx_perl`: a PPX Rewriter for Perl-ish regexp operations
 ============================================================
+:toc:
+:toc-placement: preamble
 
 OCaml has support for regular expressions using a number of different
 packages: `str`, `pcre`, and `re`.  These all present a functional
