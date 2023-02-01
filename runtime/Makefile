@@ -21,7 +21,7 @@ CMTI := $(MLI:.mli=.cmti)
 
 OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Pa_ppx_perl
 
-all: $(TARGET) $(TARGET:.cma=.cmxa)
+all: $(TARGET) $(TARGET:.cma=.cmxa) META
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 doc: $(CMT) $(CMTI)
@@ -41,11 +41,9 @@ mk_meta: mk_meta.cmo
 mk_meta.ml: mk_meta.ML
 	cppo $< > $@
 
-install:: mk_meta
+install:: META
 	mkdir -p $(DESTDIR)/lib
-	./mk_meta -destdir $(DESTDIR)/lib > META
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl_runtime -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) pa_ppx_perl.cmx pa_ppx_perl.cmi $(wildcard *.cmt*)
-	$(RM) -f META
 
 clean::
 	rm -rf META mk_meta mk_meta.ml

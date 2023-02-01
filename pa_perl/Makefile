@@ -22,7 +22,7 @@ export MIGRATE_CFLAGS= -ppopt -pa_import-I -ppopt . -ppopt -pa_passthru-debug \
 	-ppopt -pa_import-package -ppopt $(PACKAGES)
 export MIGRATE_PACKAGES=pa_ppx.import,pa_ppx_migrate
 
-all: $(TARGET) $(TARGET:.cma=.cmxa) camlp5.pa_ppx_perl camlp5.pa_ppx_perl.opt
+all: $(TARGET) $(TARGET:.cma=.cmxa) camlp5.pa_ppx_perl camlp5.pa_ppx_perl.opt META
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 doc: $(CMT) $(CMTI)
@@ -42,11 +42,9 @@ mk_meta: mk_meta.cmo
 mk_meta.ml: mk_meta.ML
 	cppo $< > $@
 
-install:: mk_meta
+install:: META
 	mkdir -p $(DESTDIR)/lib
-	./mk_meta -destdir $(DESTDIR)/lib > META
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
-	$(RM) -f META
 
 clean::
 	rm -rf META camlp5.pa_ppx_perl* mk_meta mk_meta.ml
