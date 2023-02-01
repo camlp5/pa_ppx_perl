@@ -56,7 +56,7 @@ ocamlfind ocamlc -package pa_ppx_perl -linkpkg -linkall -o ppx_perl.exe ppx_perl
 
 == Examples
 
-A match regexp with capture groups::
+=== A match regexp with capture groups
 
 In Perl we can break the "shebang" line in `$x` into a directory and
 the filename in that directory:
@@ -82,7 +82,7 @@ This corresponds to the entire match, both capture groups (which might
 be empty), and of course the argument string might not match the
 regexp.  Later we'll see how to simplify this.
 
-Splitting a string with a regexp::
+=== Splitting a string with a regexp
 
 In Perl we can split a string with a regexp:
 
@@ -138,7 +138,7 @@ later.
 
 NOTE the "strings" above. We'll come to this later on.
 
-match-and-replace with a regexp/pattern::
+=== match-and-replace with a regexp/pattern
 
 In Perl we can match-and-replace:
 
