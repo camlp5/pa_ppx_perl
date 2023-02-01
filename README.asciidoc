@@ -305,8 +305,11 @@ pretty cumbersome to handle.  Suppose that we only want capture group
 `2`, and if it isn't matched, we'd like an exception.  That is,
 capture group `2` is *mandatory*.  Then the modifier `exc strings !2`
 would produce the result type `string` (and only capture group `2`).
-If we wanted capture groups `1`, `3`, we would use the modifier
-`exc strings (!1, !3)`, and the result type would be `string * string`
+If we wanted capture groups `1`, `3`, we would use the modifier `exc
+strings (!1, !3)`, and the result type would be `string * string`.  If
+we wanted capture groups `1`, `2`, but not mandatory, the modifier
+`strings (1,2)` would give us a result type `(string option * string
+option) option` and no exception getting raised.
 
 == The supported PPX extensions
 
