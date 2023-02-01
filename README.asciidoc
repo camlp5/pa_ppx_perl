@@ -239,31 +239,31 @@ There are four kinds of modifiers, and different kinds are allowed for different
 
 * regexp compile-time modifiers: allowed for `match`, `split`, `subst`
 
-** `i`: case-insensitive regexp
-** `s`: treat string being matched as a single line (like Perl `/s`)
-** `m`: treat string being matched as multiple lines (like Perl `/m`)
+  ** `i`: case-insensitive regexp
+  ** `s`: treat string being matched as a single line (like Perl `/s`)
+  ** `m`: treat string being matched as multiple lines (like Perl `/m`)
 
-`m` and `s` are mutually-exclusive
+  `m` and `s` are mutually-exclusive
 
 * regexp output modifiers: allowed for `match`, `split`
 
-** `exc`: raise `Not_found` if the regexp does not match or mandatory
-    capture-groups did not match.
+  ** `exc`: raise `Not_found` if the regexp does not match or mandatory
+      capture-groups did not match.
 
-** `group`: return a `Re.Group.t`
+  ** `group`: return a `Re.Group.t`
 
-** `strings`: return a tuple of `string option` for each capture-group
+  ** `strings`: return a tuple of `string option` for each capture-group
 
-`group` and `strings` are mutually-exclusive.  Also, `strings` can
-take parameters, which are explained below.
+  `group` and `strings` are mutually-exclusive.  Also, `strings` can
+  take parameters, which are explained below.
 
 * pattern modifiers: allowed for `pattern` and `subst`
 
-** `e`: the pattern is an OCaml expression, not a string
+  ** `e`: the pattern is an OCaml expression, not a string
 
 * substitution modifiers: allowed for `subst`
 
-** `g`: apply the substitution to every occurrence of the regexp, not just the first one
+  ** `g`: apply the substitution to every occurrence of the regexp, not just the first one
 
 == The supported PPX extensions
 
