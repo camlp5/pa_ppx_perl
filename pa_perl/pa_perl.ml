@@ -423,5 +423,4 @@ let ef = EF.{ (ef) with
   Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;
 
-Pa_ppx_base.Pa_passthru.debug := true ;;
 install();;
