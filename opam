@@ -14,9 +14,8 @@ dev-repo: "git+https://github.com/camlp5/pa_ppx_perl.git"
 doc: "https://github.com/camlp5/pa_ppx_perl/doc"
 
 depends: [
-  "ocaml"       { >= "4.10.0" & < "5.01.0" }
+  "ocaml"       { >= "4.10.0" }
   "camlp5-buildscripts"
-  "cppo"         {build}
   "camlp5"      { >= "8.00.04" }
   "pa_ppx"      { >= "0.10" }
   "pa_ppx_migrate"      { >= "0.09" }
