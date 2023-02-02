@@ -103,7 +103,9 @@ into a directory and the filename in that directory, which yields `$&` (the
 entire matched substring), `$1` and `$2`, the directory and filename.
 
 ```sh
-$ perl -MData::Dumper -e '$x = "#!/foo/bar/buzz  abc  def"; $x =~ m,^#!(\S+)/([^/\s]+),; print Dumper([$&, $1, $2]);'
+$ perl -MData::Dumper -e '$x = "#!/foo/bar/buzz  abc  def"; \
+> $x =~ m,^#!(\S+)/([^/\s]+),; \
+> print Dumper([$&, $1, $2]);'
 $VAR1 = [
           '#!/foo/bar/buzz',
           '/foo/bar',
@@ -126,7 +128,9 @@ Some ("#!/foo/bar/buzz", Some "/foo/bar", Some "buzz")
 In Perl we can split a string with a regexp:
 
 ```sh
-$ perl -MData::Dumper -e '$x = "abcdaceabc" ; @l = split(/ab?c/, $x); print Dumper([@l]);'
+$ perl -MData::Dumper -e '$x = "abcdaceabc" ; \
+> @l = split(/ab?c/, $x); \
+> print Dumper([@l]);'
 $VAR1 = [
           '',
           'd',
@@ -147,7 +151,9 @@ NOTE WELL: there's a discrepancy here between Perl and OCaml's `re`.
 In Perl we can also use capture-groups with a split:
 
 ```sh
-$ perl -MData::Dumper -e '$x = "abcdaceabc" ; @l = split(/a(b)?c/, $x); print Dumper([@l]);'
+$ perl -MData::Dumper -e '$x = "abcdaceabc" ; \
+> @l = split(/a(b)?c/, $x); \
+> print Dumper([@l]);'
 $VAR1 = [
           '',
           'b',
@@ -193,13 +199,17 @@ NOTE the "strings" above. We'll come to this later on.
 In Perl we can match-and-replace:
 
 ```sh
-$ perl -MData::Dumper -e '$x = "abc\nabc"; $x =~ s,a(bc),<<$1>>,; print Dumper($x);'
+$ perl -MData::Dumper -e '$x = "abc\nabc"; \
+> $x =~ s,a(bc),<<$1>>,; \
+> print Dumper($x);'
 $VAR1 = '<<bc>>
 abc';
 ```
 or (to refer to local Perl variables)
 ```sh
-$ perl -MData::Dumper -e '$lhs = "<<" ; $rhs = ">>" ; $x = "abc\nabc"; $x =~ s,a(bc),${lhs}$1${rhs},; print Dumper($x);'
+$ perl -MData::Dumper -e '$lhs = "<<" ; $rhs = ">>" ; $x = "abc\nabc"; \
+> $x =~ s,a(bc),${lhs}$1${rhs},; \
+> print Dumper($x);'
 $VAR1 = '<<bc>>
 abc';
 ```
