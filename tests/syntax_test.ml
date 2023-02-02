@@ -20,6 +20,7 @@ let assert_raises_exn_pattern pattern f =
 let test_match ctxt =
   ()
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/exc group] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/ strings] |foo} ; ())
   ; assert_raises_exn_pattern "build_regexp.*at most one of.*strings.*group"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/group strings] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/m] |foo} ; ())
@@ -28,6 +29,8 @@ let test_match ctxt =
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/m s] |foo})
   ; assert_raises_exn_pattern "build_regexp.*forbidden.*: e"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/e] |foo})
+  ; assert_raises_exn_pattern "build_regexp.*forbidden.*: g"
+      (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/g] |foo})
 
 let suite = "Test pa_ppx_perl syntax" >::: [
       "match"   >:: test_match
