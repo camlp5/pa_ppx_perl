@@ -105,6 +105,24 @@ type t =
 | StringGroups of (int *bool) list
 | Exception [@@deriving show]
 
+let pp_hum pps = function
+  Multi -> Fmt.(pf pps "m")
+| Single -> Fmt.(pf pps "s")
+| Global -> Fmt.(pf pps "g")
+| Insensitive -> Fmt.(pf pps "i")
+| Expr -> Fmt.(pf pps "e")
+| Group -> Fmt.(pf pps "group")
+| Strings -> Fmt.(pf pps "strings")
+| StringGroups l ->
+   let cgnum pps = function
+       (n,true) -> Fmt.(pf pps "!%d" n)
+     | (n,false) -> Fmt.(pf pps "%d" n) in
+   Fmt.(pf pps "strings (%a)" (list ~sep:(const string ",") cgnum) l)
+| Exception -> Fmt.(pf pps "exc")
+
+let fixed_only l =
+  Std.filter (function StringGroups _ -> false | _ -> true) l
+
 let default_string_groups ngroups =
   (Std.interval 0 (ngroups-1))
   |> List.map (fun i -> if i = 0 then (0,true) else (i,false))
@@ -136,7 +154,7 @@ let convert e =
     | [] -> []
     | _ -> badarg() in
   let (f,l) = Expr.unapplist e in
-  conv (f::l)
+  Std.uniquize (conv (f::l))
 
 let string_groups loc options ngroups =
   if not (List.mem Strings  options) && not(List.mem Group options) then
@@ -195,12 +213,29 @@ let rec build_result loc ~options ngroups use_exception =
                | rv -> rv
                  >>
 
+let check_oneof ~l options =
+  List.length (Std.intersect options l) <= 1
+
+let forbidden_options ~l options =
+  let options = Options.fixed_only options in
+  Std.subtract options l
+
+let validate_options loc options =
+  let open Options in
+  if not (check_oneof ~l:[Strings; Group] options) then
+    Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
+           (list ~sep:(const string " ") Options.pp_hum) (Std.except Strings options)) ;
+  if not (check_oneof ~l:[Multi;Single] options) then
+    Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<s>>, <<m>>: %a"
+           (list ~sep:(const string " ") Options.pp_hum) (Std.except Strings options)) ;
+  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Group; Strings] options in
+  if fl <> [] then
+    Fmt.(raise_failwithf loc "Match.build_regexp: forbidden option: %a" (list ~sep:(const string " ") Options.pp_hum) fl) ;
+  ()
+
 let build_regexp loc ~options restr =
   let open Options in
-  if List.mem Strings options && List.mem Group options then
-    Fmt.(raise_failwithf loc "Match.build_regexp: can specify at most one of <<strings>>, <<group>>: %a"
-           (list Options.pp) options)
-  else
+  validate_options loc options ;
   let use_exception = List.mem Exception options in
   let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
   let ngroups = Re.group_count re in
@@ -370,4 +405,5 @@ let ef = EF.{ (ef) with
   Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;
 
+Pa_ppx_base.Pa_passthru.debug := true ;;
 install();;
