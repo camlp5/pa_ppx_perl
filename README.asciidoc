@@ -361,6 +361,7 @@ matches, but let's ignore that for now.  The type of the regexp is
 = <fun>
 ```
 since
+
 * it could fail to match (outermost `option`)
 * each of the capture groups `1`, `2`, `3` could fail (other `option` types)
 
