@@ -354,26 +354,40 @@ regexp has *four* capture groups:
 If the regexp matches the string input, capture group `0` will be
 non-null.  But capture groups `1`,`3` can be null even if the regexp
 matches the string input.  Capture group `2` must match if the string
-matches, but let's ignore that for now.  So a *transparent* type for a
-*successful match* would be
+matches, but let's ignore that for now.  The type of the regexp is
+```ocaml
+# [%match {|(a)?(b)(c)?|}] ;;
+- : string -> (string * string option * string option * string option) option
+= <fun>
 ```
-string * string option * string option * string option
-```
-and a *transparent* type the result of a regexp match (which might fail) would be
-```
-(string * string option * string option * string option) option
+since
+* it could fail to match (outermost `option`)
+* each of the capture groups `1`, `2`, `3` could fail (other `option` types)
+
+If we'd prefer to have an exception (`Not_found`) on unsuccessful
+match, the `exc` modifier will do that for us:
+
+```ocaml
+# [%match {|(a)?(b)(c)?|} / exc] ;;
+- : string -> string * string option * string option * string option = <fun>
 ```
 
-With the `exc` modifier we get the former type, but this is still
-pretty cumbersome to handle.  Suppose that we only want capture group
-`2`, and if it isn't matched, we'd like an exception.  That is,
-capture group `2` is *mandatory*.  Then the modifier `exc strings !2`
-would produce the result type `string` (and only capture group `2`).
-If we wanted capture groups `1`, `3`, we would use the modifier `exc
-strings (!1, !3)`, and the result type would be `string * string`.  If
-we wanted capture groups `1`, `2`, but not mandatory, the modifier
-`strings (1,2)` would give us a result type `(string option * string
-option) option` and no exception getting raised.
+Perhaps we'd like only the second capture group:
+
+```ocaml
+# [%match {|(a)?(b)(c)?|} / exc strings 2] ;;
+- : string -> string option = <fun>
+```
+
+And since in the regexp that capture group must match for the entire
+regexp to match, we might want to dispense with the `option`:
+
+```ocaml
+# [%match {|(a)?(b)(c)?|} / exc strings !2] ;;
+- : string -> string = <fun>
+```
+
+
 
 == The supported PPX extensions
 
