@@ -44,6 +44,7 @@ mk_meta.ml: mk_meta.ML
 
 install:: META
 	mkdir -p $(DESTDIR)/lib
+	touch META
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
 
 clean::

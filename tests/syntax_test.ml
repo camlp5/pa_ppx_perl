@@ -21,19 +21,55 @@ let test_match ctxt =
   ()
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/exc group] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/ strings] |foo} ; ())
-  ; assert_raises_exn_pattern "build_regexp.*at most one of.*strings.*group"
+  ; assert_raises_exn_pattern "match extension.*at most one of.*strings.*group"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/group strings] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/m] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/s] |foo} ; ())
-  ; assert_raises_exn_pattern "build_regexp.*at most one of.*<<s>>.*<<m>>"
+  ; assert_raises_exn_pattern "match extension.*at most one of.*<<s>>.*<<m>>"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/m s] |foo})
-  ; assert_raises_exn_pattern "build_regexp.*forbidden.*: e"
+  ; assert_raises_exn_pattern "match extension.*forbidden.*: e"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/e] |foo})
-  ; assert_raises_exn_pattern "build_regexp.*forbidden.*: g"
+  ; assert_raises_exn_pattern "match extension.*forbidden.*: g"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/g] |foo})
+
+let test_split ctxt =
+  ()
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/exc group] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/ strings] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"] |foo} ; ())
+  ; assert_raises_exn_pattern "split extension.*at most one of.*strings.*group"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/group strings] |foo})
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/m] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/s] |foo} ; ())
+  ; assert_raises_exn_pattern "split extension.*at most one of.*<<s>>.*<<m>>"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/m s] |foo})
+  ; assert_raises_exn_pattern "split extension.*forbidden.*: e"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/e] |foo})
+  ; assert_raises_exn_pattern "split extension.*forbidden.*: g"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/g] |foo})
+  ; assert_raises_exn_pattern "split extension: must specify one of <<strings>>, <<group>>"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "a(b)c"] |foo})
+
+let test_pattern ctxt =
+  ()
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%pattern "abc"] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%pattern "abc" / e] |foo} ; ())
+  ; assert_raises_exn_pattern "pattern extension: forbidden option: s"
+      (fun () -> PAPR.Implem.pa1 {foo| [%pattern "abc"/s] |foo})
+
+let test_subst ctxt =
+  ()
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%subst "abc" / "def"] |foo} ; ())
+  ; assert_raises_exn_pattern "subst extension: forbidden option: group"
+      (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /group] |foo})
+  ; assert_raises_exn_pattern "subst extension: can specify at most one of <<s>>, <<m>>"
+      (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /s m] |foo})
 
 let suite = "Test pa_ppx_perl syntax" >::: [
       "match"   >:: test_match
+    ; "split"   >:: test_split
+    ; "pattern"   >:: test_pattern
+    ; "subst"   >:: test_subst
     ]
 
 let _ = 
