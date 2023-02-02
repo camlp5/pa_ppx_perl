@@ -15,6 +15,9 @@ TESTS=ppx_perl.exe ya-wrap-ocamlfind join_meta
 
 all: $(TESTS)
 
+mdx-test::
+	$(LAUNCH) ocaml-mdx test foo.asciidoc
+
 test:: all
 	mkdir -p _build && ./ppx_perl.exe
 
@@ -30,7 +33,7 @@ join_meta: join_meta.cmo
 clean::
 	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind join_meta
 
-EXTERNAL := $(shell $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
+EXTERNAL := $(shell $(LAUNCH) $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
 $(CMO) $(TESTS): $(EXTERNAL)
 
 depend::

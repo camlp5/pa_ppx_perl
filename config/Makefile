@@ -3,8 +3,8 @@
 
 RM=rm
 
-OCAMLFIND=ocamlfind
 LAUNCH=env TOP=$(TOP) ocamlfind camlp5-buildscripts/LAUNCH --
+OCAMLFIND=ocamlfind
 YAWRAP=ocamlfind camlp5-buildscripts/ya-wrap-ocamlfind
 JOINMETA=ocamlfind camlp5-buildscripts/join_meta
 NOT_OCAMLFIND=$(LAUNCH) not-ocamlfind
@@ -26,11 +26,11 @@ export PERL5LIB := $(TOP):$(PERL5LIB)
 top: all
 
 .mli.cmi:
-	$(LAUNCH) $(YAWRAP) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -c $<
+	$(YAWRAP) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -c $<
 
 .ml.cmo:
 #	$(LAUNCH) $(YAWRAP) $(NOT_OCAMLFIND) preprocess $(OCAMLCFLAGS) -package $(PACKAGES),$(PRPACKAGE) $< > $*_ppo.ml
-#	$(LAUNCH) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o -c $*_ppo.ml
+#	$(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o -c $*_ppo.ml
 	$(LAUNCH) $(YAWRAP) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -c $<
 
 .ml.cmx:

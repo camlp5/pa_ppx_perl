@@ -43,6 +43,8 @@ trick.
 
 == Invocation
 
+=== From the OCaml compiler
+
 To invoke the PPX rewriter for a source file, the package
 `pa_ppx_perl` must be specified, viz.
 
@@ -54,49 +56,89 @@ and similarly when linking (there is a small runtime support package required
 ocamlfind ocamlc -package pa_ppx_perl -linkpkg -linkall -o ppx_perl.exe ppx_perl.cmo
 ```
 
+=== From the OCaml toplevel
+
+```ocaml
+# #use "topfind.camlp5";;
+- : unit = ()
+Findlib has been successfully loaded. Additional directives:
+  #require "package";;      to load a package
+  #list;;                   to list the available packages
+  #camlp4o;;                to load camlp4 (standard syntax)
+  #camlp4r;;                to load camlp4 (revised syntax)
+  #predicates "p,q,...";;   to set these predicates
+  Topfind.reset();;         to force that packages will be reloaded
+  #thread;;                 to enable threads
+
+- : unit = ()
+File "/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/ocaml/topfind.camlp5", line 7, characters 4-27:
+7 |     Toploop.directive_table
+        ^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: Toploop.directive_table
+File "/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/ocaml/topfind.camlp5", line 20, characters 4-27:
+20 |     Toploop.directive_table
+         ^^^^^^^^^^^^^^^^^^^^^^^
+Alert deprecated: Toploop.directive_table
+Additional Camlp5 directives:
+  #camlp5o;;                to load camlp5 (standard syntax)
+  #camlp5r;;                to load camlp5 (revised syntax)
+
+- : unit = ()
+# #camlp5o ;;
+/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/ocaml/compiler-libs: added to search path
+/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp-streams: added to search path
+/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp-streams/camlp_streams.cma: loaded
+/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp5: added to search path
+/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp5/camlp5o.cma: loaded
+# #require "pa_ppx_perl" ;;
+```
+
+
 == Examples
 
 === A match regexp with capture groups (like Perl's `m/.../`)
 
-In Perl we can break the "shebang" line in `$x` into a directory and
-the filename in that directory:
+In Perl we can break the "shebang" line in `$x` (`"#!/foo/bar/buzz  abc  def"`)
+into a directory and the filename in that directory, which yields `$&` (the
+entire matched substring), `$1` and `$2`, the directory and filename.
 
+```sh
+$ perl -MData::Dumper -e '$x = "#!/foo/bar/buzz  abc  def"; $x =~ m,^#!(\S+)/([^/\s]+),; print Dumper([$&, $1, $2]);'
+$VAR1 = [
+          '#!/foo/bar/buzz',
+          '/foo/bar',
+          'buzz'
+        ];
 ```
-$x =~ m,^#!(\S+)/([^/\s]+),
-```
-
-And afterwards, we can use `$&` for the entire matched string, `$1`
-for the directory part, and `$2` for the filename part.
 
 In OCaml we can write:
 
+```ocaml
+# [%match {|^#!(\S+)/([^/\s]+)|}] ;;
+- : string -> (string * string option * string option) option = <fun>
+# [%match {|^#!(\S+)/([^/\s]+)|}] "#!/foo/bar/buzz  abc  def";;
+- : (string * string option * string option) option =
+Some ("#!/foo/bar/buzz", Some "/foo/bar", Some "buzz")
 ```
-[%match {|^#!(\S+)/([^/\s]+)|}]
-```
-of type
-```
-string -> (string * string option * string option) option
-```
-
-This corresponds to the entire match, both capture groups (which might
-be empty), and of course the argument string might not match the
-regexp.  Later we'll see how to simplify this.
 
 === Splitting a string with a regexp (like Perl's `split(/.../,...)`)
 
 In Perl we can split a string with a regexp:
 
+```sh
+$ perl -MData::Dumper -e '$x = "abcdaceabc" ; @l = split(/ab?c/, $x); print Dumper([@l]);'
+$VAR1 = [
+          '',
+          'd',
+          'e'
+        ];
 ```
-$x = "abcdaceabc" ;
-split(/ab?c/, $x);
-```
-
-which returns the list `("", "d", "e")`
 
 In OCaml we can write:
 
-```
-[%split {|ab?c|}] "abcdaceabc"
+```ocaml
+# [%split {|ab?c|}] "abcdaceabc" ;;
+- : string list = ["d"; "e"]
 ```
 which returns the list `["d"; "e"]`.
 
@@ -104,16 +146,24 @@ NOTE WELL: there's a discrepancy here between Perl and OCaml's `re`.
 
 In Perl we can also use capture-groups with a split:
 
-
+```sh
+$ perl -MData::Dumper -e '$x = "abcdaceabc" ; @l = split(/a(b)?c/, $x); print Dumper([@l]);'
+$VAR1 = [
+          '',
+          'b',
+          'd',
+          undef,
+          'e',
+          'b'
+        ];
 ```
-$x = "abcdaceabc" ;
-split(/a(b)?c/, $x);
-```
-which returns the list `['','b','d',undef,'e','b']`.
 
 In OCaml, we can write
-```
-[%split {|a(b)?c|} / strings] "abcdaceabc"
+```ocaml
+# [%split {|a(b)?c|} / strings] "abcdaceabc" ;;
+- : [> `Delim of string * string option | `Text of string ] list =
+[`Delim ("abc", Some "b"); `Text "d"; `Delim ("ac", None); `Text "e";
+ `Delim ("abc", Some "b")]
 ```
 which returns the list
 ```
@@ -142,28 +192,29 @@ NOTE the "strings" above. We'll come to this later on.
 
 In Perl we can match-and-replace:
 
+```sh
+$ perl -MData::Dumper -e '$x = "abc\nabc"; $x =~ s,a(bc),<<$1>>,; print Dumper($x);'
+$VAR1 = '<<bc>>
+abc';
 ```
-$x = "abc\nabc"; $x =~ s,a(bc),<<$1>>,;
+or (to refer to local Perl variables)
+```sh
+$ perl -MData::Dumper -e '$lhs = "<<" ; $rhs = ">>" ; $x = "abc\nabc"; $x =~ s,a(bc),${lhs}$1${rhs},; print Dumper($x);'
+$VAR1 = '<<bc>>
+abc';
 ```
-or (to refere to local Perl variables)
-```
-$lhs = "<<" ; $rhs = ">>" ;
-$x = "abc\nabc"; $x =~ s,a(bc),${lhs}$1${rhs},;
-```
-and afterward, `$x` has value `"<<bc>>\nabc"`.
 
 In OCaml we can do the same:
 
-```
-[%subst {|a(bc)|} / {|<<$1>>|}] "abc\nabc"
+```ocaml
+# [%subst {|a(bc)|} / {|<<$1>>|}] "abc\nabc" ;;
+- : string = "<<bc>>\nabc"
 ```
 or (to refer to local OCaml variables)
+```ocaml
+# let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}] "abc\nabc"
+- : string = "<<bc>>\nabc"
 ```
-let lhs = "<<" ;;
-let rhs = ">>" ;;
-[%subst {|a(bc)|} / {|${lhs}$1${rhs}|}] "abc\nabc"
-```
-with value `"<<bc>>\nabc"`.
 
 In Perl instead of a *pattern* for the right-hand-side of the
 substition, we can use a Perl expression, in which special variables
@@ -197,16 +248,18 @@ and we've already seen both kinds just above.
 
 First there are strings with antiquotations for variables and capture-groups:
 
-```
-[%pattern {|<<$1>>|}}
+```ocaml
+# [%pattern {|<<$1>>|}] ;;
+- : Re.substrings -> string = <fun>
 ```
 or
+```ocaml
+# fun lhs rhs -> [%pattern {|${lhs}$1${rhs}|}] ;;
+- : string -> string -> Re.substrings -> string = <fun>
 ```
-{|${lhs}$1${rhs}|}]
-```
-and then there expression with antiquotations for capture-groups:
-```
-[%pattern {|lhs ^ $1$ ^ rhs|} / e]
+and also an expression with antiquotations for capture-groups:
+```ocaml
+fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e]
 ```
 
 NOTE that just as in Perl `s///`, to indicate that the pattern is an
@@ -218,9 +271,9 @@ In an expression variables are already expressible, and capture groups
 are expressed as `$N$` (where `N` is an integer constant).
 
 A pattern that doesn't have any capture-groups has type `string`; a
-pattern that does have capture-groups has type `Re.Group.t -> string`
+pattern that does have capture-groups has type `Re.substrings -> string`
 (since those capture-groups will have to be taken from some
-already-matched regexp, and a matched regexp produces a `Re.Group.t`).
+already-matched regexp, and a matched regexp produces a `Re.substrings`).
 
 == The high-level syntax of these extensions
 
@@ -250,7 +303,7 @@ There are four kinds of modifiers, and different kinds are allowed for different
 ** `exc`: raise `Not_found` if the regexp does not match or mandatory
     capture-groups did not match.
 
-** `group`: return a `Re.Group.t`
+** `group`: return a `Re.substrings`
 
 ** `strings`: return a tuple of `string option` for each capture-group
 
@@ -268,16 +321,16 @@ take parameters, which are explained below.
 === The `group` and `strings` modifiers
 
 A regexp, when applied to some input string, can match, or fail to
-match.  The most primitive result it can produce is a `Re.Group.t`,
+match.  The most primitive result it can produce is a `Re.substrings`,
 which holds the substrings of the input that matched the capture
 groups of the regexp.  So the result type of a regexp match should be
-`Re.Group.t option`
+`Re.substrings option`
 
 With the `exc` modifier (which causes `Not_found` to be raised on
-match failure), this becomes `Re.Group.t`.
+match failure), this becomes `Re.substrings`.
 
 To get these result types, we use the modifier `group`.  But a
-`Re.Group.t` is a complex object and we might want something more
+`Re.substrings` is a complex object and we might want something more
 *transparent*.  A natural thing to want, is a tuple of all the
 capture-groups.  So let's consider a regexp: `(a)?(b)(c)?`.  This
 regexp has *four* capture groups:
@@ -330,7 +383,7 @@ Modifiers
 
 `i`:: case-insensitive matching
 `exc`:: use exception match-failure instead option
-`group`:: return the `Re.Group.t` object
+`group`:: return the `Re.substrings` object
 `strings`:: [DEFAULT] return tuple of `string option` components for capture group
 
 The type of result varies depending whether we're using exceptions for
@@ -375,7 +428,7 @@ The result is as in match regexps.
 [%pattern {|...expr...|} / e]
 ```
 
-type: if the pattern uses any capture-group expressions (viz. `$1`, or `$1$`) then `Re.Group.t -> string`
+type: if the pattern uses any capture-group expressions (viz. `$1`, or `$1$`) then `Re.substrings -> string`
 else `string`.
 
 In the first case, the pattern can contain $N or ${N} (where N is an

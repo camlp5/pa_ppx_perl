@@ -21,6 +21,10 @@ sys:
 test: all
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
 
+mdx-test::
+	$(LAUNCH) ocaml-mdx test README.asciidoc
+	test -f README.asciidoc.corrected && diff -Bwiu README.asciidoc README.asciidoc.corrected
+
 META: all
 	$(JOINMETA) -rewrite pa_ppx_perl_runtime:pa_ppx_perl.runtime \
 			-direct-include pa_perl \
