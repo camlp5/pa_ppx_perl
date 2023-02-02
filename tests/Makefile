@@ -15,9 +15,6 @@ TESTS=ppx_perl.exe ya-wrap-ocamlfind join_meta
 
 all: $(TESTS)
 
-mdx-test::
-	$(LAUNCH) ocaml-mdx test foo.asciidoc
-
 test:: all
 	mkdir -p _build && ./ppx_perl.exe
 
