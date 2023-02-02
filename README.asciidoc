@@ -222,7 +222,7 @@ In OCaml we can do the same:
 ```
 or (to refer to local OCaml variables)
 ```ocaml
-# let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}] "abc\nabc"
+# let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}] "abc\nabc" ;;
 - : string = "<<bc>>\nabc"
 ```
 
@@ -269,7 +269,8 @@ or
 ```
 and also an expression with antiquotations for capture-groups:
 ```ocaml
-fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e]
+# fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e] ;;
+- : string -> string -> Re.substrings -> string = <fun>
 ```
 
 NOTE that just as in Perl `s///`, to indicate that the pattern is an
