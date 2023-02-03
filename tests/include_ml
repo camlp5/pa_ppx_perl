@@ -36,6 +36,4 @@ Pcaml.inter_phrases := Some ";\n";;
 #require "pa_ppx.testutils";;
 #require "pa_ppx_perl";;
 open Pa_ppx_testutils.Papr_util ;;
-#load "syntax_test.cmo";;
-open Syntax_test ;;
 
