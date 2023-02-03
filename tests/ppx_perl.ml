@@ -137,8 +137,7 @@ let test_delim_split ctxt =
 let test_pcre_delim_split ctxt =
   ()
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text "b"; `Delim"a"] ([%split "a"/pcre strings] "ababa")
-  ; Fmt.(pf stderr "DISCREPANCY HERE\n%!") ;
-  ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Delim"a"; `Text "b"; `Delim"a"] ([%split "a"/pcre strings] "abaaba")
+  ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text ""; `Delim"a"; `Text "b"; `Delim"a"] ([%split "a"/pcre strings] "abaaba")
   ; assert_equal [`Delim("a",None); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("a",None)] ([%split "a(c)?"/pcre strings] "abacba")
   ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")] ([%split "a(c)"/pcre strings] "acbacbac")
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre strings !1] "acbacbac")

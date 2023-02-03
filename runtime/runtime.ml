@@ -24,9 +24,8 @@ let pcre_full_split rex str =
       | ss ->
          let (s,e) = get_substring_ofs ss 0 in
          let acc =
-           if start = s then acc
-           else
-             (`Text (String.sub str start (s-start)) :: acc) in
+           if s = 0 then acc
+           else (`Text (String.sub str start (s-start)) :: acc) in
          if pos = s then
            if s = e then
              srec (`Delim ss::acc) ~start:e ~pos:(e+1)
