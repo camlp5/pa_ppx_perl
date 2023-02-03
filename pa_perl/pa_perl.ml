@@ -470,6 +470,7 @@ let validate_options modn loc options =
   let open Options in
   validate_options "subst" loc options ;
   if List.mem RePerl options then
+    let _ = Re.Perl.compile_pat (Scanf.unescaped restr) in
     let global = List.mem Global options in
     let global = if global then <:expr< true >> else <:expr< false >> in
     let compile_opt_expr = compile_opts loc options in
@@ -477,6 +478,7 @@ let validate_options modn loc options =
     let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
     <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
   else if List.mem Pcre options then
+    let _ = Pcre.regexp (Scanf.unescaped restr) in
     let global = List.mem Global options in
     let replacef = if global then <:expr< Pcre.substitute_substrings >> else <:expr< Pcre.substitute_substrings_first >> in
     let compile_opt_expr = compile_opts loc options in

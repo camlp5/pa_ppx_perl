@@ -170,6 +170,13 @@ let test_ocamlfind_bits ctxt =
        {|(** -syntax camlp5o *)
 |}))
 
+let test_pcre_ocamlfind_bits ctxt =
+  ()
+  ; assert_equal (Some " -syntax camlp5o ")
+      (snd ([%match {|^\(\*\*(.*?)\*\)|} / exc strings pcre]
+       {|(** -syntax camlp5o *)
+|}))
+
 let envsubst envlookup s =
   let f s1 s2 =
     if s1 <> "" then envlookup s1
@@ -181,6 +188,18 @@ let envsubst envlookup s =
 let test_envsubst_via_replace ctxt =
   let f = function "A" -> "res1" | "B" -> "res2" in
   assert_equal "...res1...res2..." (envsubst f {|...$(A)...${B}...|})
+
+let pcre_envsubst envlookup s =
+  let f s1 s2 =
+    if s1 <> "" then envlookup s1
+    else if s2 <> "" then envlookup s2
+    else assert false in
+
+  [%subst {|(?:\$\(([^)]+)\)|\$\{([^}]+)\})|} / {| f $1$ $2$ |} / g e pcre] s
+
+let test_pcre_envsubst_via_replace ctxt =
+  let f = function "A" -> "res1" | "B" -> "res2" in
+  assert_equal "...res1...res2..." (pcre_envsubst f {|...$(A)...${B}...|})
 
 let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
@@ -202,7 +221,9 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "subst"   >:: test_subst
     ; "pcre subst"   >:: test_pcre_subst
     ; "ocamlfind bits"   >:: test_ocamlfind_bits
+    ; "pcre ocamlfind bits"   >:: test_pcre_ocamlfind_bits
     ; "envsubst via replace"   >:: test_envsubst_via_replace
+    ; "pcre envsubst via replace"   >:: test_pcre_envsubst_via_replace
     ]
 
 let _ = 
