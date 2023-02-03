@@ -143,7 +143,7 @@ let test_pcre_expr_pattern ctxt =
   ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e pcre] ([%match "abc"/exc pcre raw] "abc"))
   ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e pcre])
 
-let test_string_subst ctxt =
+let test_subst ctxt =
   ()
   ; assert_equal "$b"  ([%subst "a(b)c" / {|$$$1|}] "abc")
   ; assert_equal "$b"  ([%subst "A(B)C" / {|$$$1|} / i] "abc")
@@ -189,7 +189,7 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "pcre string_pattern"   >:: test_pcre_string_pattern
     ; "expr_pattern"   >:: test_expr_pattern
     ; "pcre expr_pattern"   >:: test_pcre_expr_pattern
-    ; "string_subst"   >:: test_string_subst
+    ; "subst"   >:: test_subst
     ; "ocamlfind bits"   >:: test_ocamlfind_bits
     ; "envsubst via replace"   >:: test_envsubst_via_replace
     ]
