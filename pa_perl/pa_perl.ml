@@ -332,7 +332,7 @@ let rec pcre_build_result loc ~options ngroups =
   if List.mem Strings options then
     Fmt.(raise_failwithf loc "split extension: <<strings>> is incompatible with <<pcre>>\n")
   else if List.mem Raw options then
-    <:expr< Pcre.full_split ~max:(-1) ~rex:__re__ __subj__ >>
+    <:expr< Pa_ppx_perl.Runtime.pcre_full_split __re__ __subj__ >>
   else
     <:expr< Pcre.split ~rex:__re__ __subj__ >>
 
