@@ -87,10 +87,35 @@ let test_single ctxt =
   ; assert_equal "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g] "abca\ncaec")
   ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s] "abca\ncaec")
 
+let test_pcre_single ctxt =
+  ()
+  ; assert_equal None ([%match ".+"/pcre] "\n\n")
+  ; assert_equal "\n\n" ([%match ".+" / s exc pcre strings] "\n\n")
+  ; assert_equal None ([%match ".+" / m pcre strings] "\n\n")
+
+  ; assert_equal None ([%match ".+"/ pcre strings] "\n\n")
+  ; assert_equal (Some "\n\n") ([%match ".+"/s pcre strings] "\n\n")
+  ; assert_equal None ([%match ".+"/m pcre strings] "\n\n")
+
+  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|} / pcre] "abc\ndef")
+  ; assert_equal "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s pcre] "abc\ndef")
+  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m pcre] "abc\ndef")
+
+  ; assert_equal "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|} /pcre] "abc\ndef")
+  ; assert_equal "<<abc>><<>>\n<<def>><<>>"  ([%subst ".*" / {|<<$0>>|} / g pcre] "abc\ndef")
+  ; assert_equal "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g pcre] "abc\ndef")
+  ; assert_equal "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g pcre] "abca\ncaec")
+  ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s pcre] "abca\ncaec")
+
 let test_multiline ctxt =
   ()
   ; assert_equal (Some "bar")  ([%match ".+$"/ strings] "foo\nbar")
   ; assert_equal (Some "foo")  ([%match ".+$"/ m strings] "foo\nbar")
+
+let test_pcre_multiline ctxt =
+  ()
+  ; assert_equal (Some "bar")  ([%match ".+$"/ strings pcre] "foo\nbar")
+  ; assert_equal (Some "foo")  ([%match ".+$"/ m strings pcre] "foo\nbar")
 
 let test_simple_split ctxt =
   ()
@@ -214,7 +239,9 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "search"   >:: test_search
     ; "pcre search"   >:: test_pcre_search
     ; "single"   >:: test_single
+    ; "pcre single"   >:: test_pcre_single
     ; "multiline"   >:: test_multiline
+    ; "pcre multiline"   >:: test_pcre_multiline
     ; "simple_split"   >:: test_simple_split
     ; "pcre simple_split"   >:: test_pcre_simple_split
     ; "delim_split"   >:: test_delim_split
