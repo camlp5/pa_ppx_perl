@@ -8,6 +8,7 @@
 #require "bos";;
 #require "pcre";;
 #require "re";;
+#require "str";;
 
 #require "camlp5.pa_op";;
 Pcaml.inter_phrases := Some ";;\n";;
@@ -33,6 +34,8 @@ Pcaml.inter_phrases := Some ";\n";;
 
 #require "camlp5.parser_quotations";;
 #require "pa_ppx.testutils";;
-open Pa_ppx_testutils.Papr_util ;;
 #require "pa_ppx_perl";;
+open Pa_ppx_testutils.Papr_util ;;
+#load "syntax_test.cmo";;
+open Syntax_test ;;
 

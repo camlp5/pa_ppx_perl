@@ -13,6 +13,7 @@ let assert_raises_exn_pattern pattern f =
   Testutil.assert_raises_exn_pred
     (function
        Ploc.Exc( _, Failure msg) when matches ~pattern msg -> true
+     | exc when matches ~pattern (Printexc.to_string exc) -> true
      | _ -> false
     )
     f
@@ -31,6 +32,11 @@ let test_match ctxt =
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/e] |foo})
   ; assert_raises_exn_pattern "match extension.*forbidden.*: g"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/g] |foo})
+
+let test_busted_regexps ctxt =
+  ()
+  ; assert_raises_exn_pattern "Re__Perl.*Parse_error"
+      (fun () -> PAPR.Implem.pa1 {foo| [%match {|\n$|} /s] |foo})
 
 let test_split ctxt =
   ()
@@ -70,6 +76,7 @@ let suite = "Test pa_ppx_perl syntax" >::: [
     ; "split"   >:: test_split
     ; "pattern"   >:: test_pattern
     ; "subst"   >:: test_subst
+    ; "busted regexps"   >:: test_busted_regexps
     ]
 
 let _ = 

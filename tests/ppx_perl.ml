@@ -17,9 +17,10 @@ let test_simple_match ctxt =
   ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc raw i] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
-let test_pcre_only_match ctxt =
+let test_pcre_only_regexps ctxt =
   ()
   ; assert_equal "\n"  ([%match {|\n$|}/s exc pcre strings] "\n")
+  ; assert_equal ""  ([%subst {|\n+$|} / {||} /s pcre] "\n\n")
 
 let test_pcre_simple_match ctxt =
   ()
@@ -208,7 +209,6 @@ let test_pcre_envsubst_via_replace ctxt =
 let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
     ; "pcre simple_match"   >:: test_pcre_simple_match
-    ; "pcre only_match"   >:: test_pcre_only_match
     ; "selective_match"   >:: test_selective_match
     ; "pcre selective_match"   >:: test_pcre_selective_match
     ; "search"   >:: test_search
@@ -229,6 +229,7 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "pcre ocamlfind bits"   >:: test_pcre_ocamlfind_bits
     ; "envsubst via replace"   >:: test_envsubst_via_replace
     ; "pcre envsubst via replace"   >:: test_pcre_envsubst_via_replace
+    ; "pcre only_regexps"   >:: test_pcre_only_regexps
     ]
 
 let _ = 
