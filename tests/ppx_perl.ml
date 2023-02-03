@@ -134,14 +134,15 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"]  ([%split "a(c)"/ strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"]  ([%split "a(c)?"/ strings !0] "abacba")
 
-let test_pcre_raw_delim_split ctxt =
+let test_pcre_delim_split ctxt =
   ()
-  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre raw] "ababa")
-  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre raw] "abaaba")
-  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre raw] "abacba")
-  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre raw] "acbacbac")
-  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")]  ([%split "a(c)"/pcre raw] "acbacbac")
-  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup]  ([%split "a(c)?"/pcre raw] "abacba")
+  ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text "b"; `Delim"a"] ([%split "a"/pcre strings] "ababa")
+  ; Fmt.(pf stderr "DISCREPANCY HERE\n%!") ;
+  ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Delim"a"; `Text "b"; `Delim"a"] ([%split "a"/pcre strings] "abaaba")
+  ; assert_equal [`Delim("a",None); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("a",None)] ([%split "a(c)?"/pcre strings] "abacba")
+  ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")] ([%split "a(c)"/pcre strings] "acbacbac")
+  ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre strings !1] "acbacbac")
+  ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"] ([%split "a(c)?"/pcre strings !0] "abacba")
 
 let test_string_pattern ctxt =
   ()
@@ -245,7 +246,7 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "simple_split"   >:: test_simple_split
     ; "pcre simple_split"   >:: test_pcre_simple_split
     ; "delim_split"   >:: test_delim_split
-    ; "pcre delim_split"   >:: test_pcre_raw_delim_split
+    ; "pcre delim_split"   >:: test_pcre_delim_split
     ; "string_pattern"   >:: test_string_pattern
     ; "pcre string_pattern"   >:: test_pcre_string_pattern
     ; "expr_pattern"   >:: test_expr_pattern
