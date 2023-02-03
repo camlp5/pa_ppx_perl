@@ -469,13 +469,22 @@ let validate_options modn loc options =
   let build_subst loc ~options restr patstr =
   let open Options in
   validate_options "subst" loc options ;
-  let global = List.mem Global options in
-  let global = if global then <:expr< true >> else <:expr< false >> in
-  let compile_opt_expr = compile_opts loc options in
-  let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
-  <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
-
+  if List.mem RePerl options then
+    let global = List.mem Global options in
+    let global = if global then <:expr< true >> else <:expr< false >> in
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
+    <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
+  else if List.mem Pcre options then
+    let global = List.mem Global options in
+    let replacef = if global then <:expr< Pcre.substitute_substrings >> else <:expr< Pcre.substitute_substrings_first >> in
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
+    <:expr< $exp:replacef$ ~rex:$exp:regexp_expr$ ~subst:$exp:patexpr$ >>
+  else Fmt.(raise_failwithf loc "subst extension: neither <<re>> nor <<pcre>> were found in options: %a\n"
+              (list ~sep:(const string " ") Options.pp_hum) options)
 end
 
 let rewrite_match arg = function

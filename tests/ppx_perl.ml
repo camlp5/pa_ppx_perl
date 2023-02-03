@@ -153,6 +153,16 @@ let test_subst ctxt =
   ; assert_equal "$$"  ([%subst "A(B)C" / {|"$"|} / e g i] "abcabc")
   ; assert_equal "$$"  ([%subst "A(B)C" / {|$$|} / g i] "abcabc")
 
+let test_pcre_subst ctxt =
+  ()
+  ; assert_equal "$b"  ([%subst "a(b)c" / {|$$$1|} /pcre] "abc")
+  ; assert_equal "$b"  ([%subst "A(B)C" / {|$$$1|} / i pcre] "abc")
+  ; assert_equal "$babc"  ([%subst "A(B)C" / {|$$$1|} / i pcre] "abcabc")
+  ; assert_equal "$b$b"  ([%subst "A(B)C" / {|$$$1|} / g i pcre] "abcabc")
+  ; assert_equal "$b$b"  ([%subst "A(B)C" / {|"$" ^ $1$|} / e g i pcre] "abcabc")
+  ; assert_equal "$$"  ([%subst "A(B)C" / {|"$"|} / e g i pcre] "abcabc")
+  ; assert_equal "$$"  ([%subst "A(B)C" / {|$$|} / g i pcre] "abcabc")
+
 let test_ocamlfind_bits ctxt =
   ()
   ; assert_equal (Some " -syntax camlp5o ")
@@ -190,6 +200,7 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "expr_pattern"   >:: test_expr_pattern
     ; "pcre expr_pattern"   >:: test_pcre_expr_pattern
     ; "subst"   >:: test_subst
+    ; "pcre subst"   >:: test_pcre_subst
     ; "ocamlfind bits"   >:: test_ocamlfind_bits
     ; "envsubst via replace"   >:: test_envsubst_via_replace
     ]
