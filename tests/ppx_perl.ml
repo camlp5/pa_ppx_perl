@@ -121,12 +121,27 @@ let test_string_pattern ctxt =
   ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc raw] "abc"))
   ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|}])
 
+let test_pcre_string_pattern ctxt =
+  ()
+  ; assert_equal "$b"  ([%pattern {|$$$1|} /pcre] ([%match "a(b)c"/exc pcre raw] "abc"))
+  ; assert_equal "b"  ([%pattern {|${01}|} /pcre] ([%match "a(b)c"/exc pcre raw] "abc"))
+  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|} /pcre] ([%match "a(b)c"/exc pcre raw] "abc"))
+  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|} /pcre] ([%match "a(b)c"/exc pcre raw] "abc"))
+  ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|} /pcre])
+
 let test_expr_pattern ctxt =
   ()
   ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc raw] "abc"))
   ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc raw] "abc"))
   ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc raw] "abc"))
   ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e])
+
+let test_pcre_expr_pattern ctxt =
+  ()
+  ; assert_equal "abc"  ([%pattern "$0$" / e pcre] ([%match "abc"/exc pcre raw] "abc"))
+  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e pcre] ([%match "abc"/exc pcre raw] "abc"))
+  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e pcre] ([%match "abc"/exc pcre raw] "abc"))
+  ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e pcre])
 
 let test_string_subst ctxt =
   ()
@@ -171,7 +186,9 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "delim_split"   >:: test_delim_split
     ; "pcre delim_split"   >:: test_pcre_raw_delim_split
     ; "string_pattern"   >:: test_string_pattern
+    ; "pcre string_pattern"   >:: test_pcre_string_pattern
     ; "expr_pattern"   >:: test_expr_pattern
+    ; "pcre expr_pattern"   >:: test_pcre_expr_pattern
     ; "string_subst"   >:: test_string_subst
     ; "ocamlfind bits"   >:: test_ocamlfind_bits
     ; "envsubst via replace"   >:: test_envsubst_via_replace

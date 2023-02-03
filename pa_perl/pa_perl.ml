@@ -374,8 +374,16 @@ module Pattern = struct
 
 let string_parts_pattern = Re.Perl.compile_pat {|\$\$|\$([0-9]+)|\$\{([0-9]+)\}|\$\{([^}]+)\}|}
 
-let build_string loc ~force_cgroups patstr =
+let build_string loc ~force_cgroups ~options patstr =
+  let open Options in
   let has_cgroups = ref force_cgroups in
+  let cgroup_extract_expr nstr =
+    if List.mem RePerl options then
+      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>      
+    else if List.mem Pcre options then
+      <:expr< match Pcre.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>      
+    else Fmt.(raise_failwithf loc "Pattern.build_string: neither <<re>> nor <<pcre>> were found in options: %a\n"
+            (list ~sep:(const string " ") Options.pp_hum) options) in
   let parts = Re.split_full string_parts_pattern patstr in
   let parts_exps =
     parts |> List.map (function
@@ -388,7 +396,7 @@ let build_string loc ~force_cgroups patstr =
                     | (_, Some nstr, _, _)
                     | (_, _, Some nstr, _) ->
                        has_cgroups := true ;
-                       <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+                       cgroup_extract_expr nstr
                     | (_, _, _, Some exps) ->
                        parse_expr exps
                     | _ -> Fmt.(raise_failwithf loc "pa_ppx_perl: unrecognized pattern: <<%a>>" Dump.string patstr)
@@ -399,8 +407,16 @@ let build_string loc ~force_cgroups patstr =
   else
     <:expr< String.concat "" $exp:listexpr$ >>
 
-let build_expr ~force_cgroups loc patstr =
+let build_expr loc ~force_cgroups ~options patstr =
+  let open Options in
   let has_cgroups = ref force_cgroups in
+  let cgroup_extract_expr nstr =
+    if List.mem RePerl options then
+      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>      
+    else if List.mem Pcre options then
+      <:expr< match Pcre.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>      
+    else Fmt.(raise_failwithf loc "Pattern.build_expr: neither <<re>> nor <<pcre>> were found in options: %a\n"
+            (list ~sep:(const string " ") Options.pp_hum) options) in
   let e = parse_antiquot_expr patstr in
   let dt = make_dt () in
   let old_migrate_expr = dt.migrate_expr in
@@ -408,7 +424,7 @@ let build_expr ~force_cgroups loc patstr =
       ExXtr(loc, antiquot, _) ->
        let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
        has_cgroups := true ;
-       <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+       cgroup_extract_expr nstr
     | e -> old_migrate_expr dt e in
   let dt = { dt with migrate_expr = migrate_expr } in
   let e = dt.migrate_expr dt e in
@@ -429,9 +445,9 @@ let build_pattern loc ~force_cgroups ~options patstr =
   validate_options "pattern" loc options ;
   let patstr = Scanf.unescaped patstr in
   if List.mem Expr options then
-    build_expr loc ~force_cgroups patstr
+    build_expr loc ~force_cgroups ~options patstr
   else
-    build_string loc ~force_cgroups patstr
+    build_string loc ~force_cgroups ~options patstr
 
 end
 
@@ -439,6 +455,9 @@ module Subst = struct
 
 let validate_options modn loc options =
   let open Options in
+  if not (check_oneof ~l:[RePerl; Pcre] options) then
+    Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<re>>, <<pcre>>: %a"
+           modn (list ~sep:(const string " ") Options.pp_hum) options) ;
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
@@ -454,7 +473,7 @@ let validate_options modn loc options =
   let global = if global then <:expr< true >> else <:expr< false >> in
   let compile_opt_expr = compile_opts loc options in
   let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr] options) patstr in
+  let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
   <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
 
 end
