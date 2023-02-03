@@ -57,6 +57,11 @@ let test_search ctxt =
   ; assert_equal "abc"  ([%match "abc"/exc strings] "zzzabc")
   ; assert_equal None  ([%match "^abc"/strings] "zzzabc")
 
+let test_pcre_search ctxt =
+  ()
+  ; assert_equal "abc"  ([%match "abc"/exc strings pcre] "zzzabc")
+  ; assert_equal None  ([%match "^abc"/strings pcre] "zzzabc")
+
 let test_single ctxt =
   ()
   ; assert_equal None ([%match ".+"] "\n\n")
@@ -145,6 +150,7 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "selective_match"   >:: test_selective_match
     ; "pcre selective_match"   >:: test_pcre_selective_match
     ; "search"   >:: test_search
+    ; "pcre search"   >:: test_pcre_search
     ; "single"   >:: test_single
     ; "multiline"   >:: test_multiline
     ; "simple_split"   >:: test_simple_split
