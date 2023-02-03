@@ -106,12 +106,12 @@ let test_delim_split ctxt =
 
 let test_pcre_raw_delim_split ctxt =
   ()
-  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre strings] "ababa")
-  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre strings] "abaaba")
-  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre strings] "abacba")
-  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre strings] "acbacbac")
-  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")]  ([%split "a(c)"/pcre strings !1] "acbacbac")
-  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup]  ([%split "a(c)?"/pcre strings !0] "abacba")
+  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre raw] "ababa")
+  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre raw] "abaaba")
+  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre raw] "abacba")
+  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre raw] "acbacbac")
+  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")]  ([%split "a(c)"/pcre raw] "acbacbac")
+  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup]  ([%split "a(c)?"/pcre raw] "abacba")
 
 let test_string_pattern ctxt =
   ()

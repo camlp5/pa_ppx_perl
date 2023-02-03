@@ -329,9 +329,9 @@ let rec re_build_result loc ~options ngroups =
 
 let rec pcre_build_result loc ~options ngroups =
   let open Options in
-  if List.mem Raw options then
-    Fmt.(raise_failwithf loc "split extension: <<raw>> is incompatible with <<pcre>>\n")
-  else if List.mem Strings options then
+  if List.mem Strings options then
+    Fmt.(raise_failwithf loc "split extension: <<strings>> is incompatible with <<pcre>>\n")
+  else if List.mem Raw options then
     <:expr< Pcre.full_split ~max:(-1) ~rex:__re__ __subj__ >>
   else
     <:expr< Pcre.split ~rex:__re__ __subj__ >>
