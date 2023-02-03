@@ -22,6 +22,7 @@ depends: [
   "not-ocamlfind" { >= "0.09" }
   "ounit" {with-test}
   "fmt"
+  "pcre"
   "re"
 ]
 build: [

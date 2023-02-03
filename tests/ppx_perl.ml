@@ -17,6 +17,21 @@ let test_simple_match ctxt =
   ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc group i] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
+let test_pcre_simple_match ctxt =
+  ()
+  ; assert_equal "abc"  (Pcre.get_substring ([%match "abc"/exc group pcre] "abc") 0)
+  ; assert_equal (Some "abc")  ([%match "abc"/pcre] "abc")
+  ; assert_equal (Some "abc")  ([%match "abc"/strings pcre] "abc")
+  ; assert_equal None  ([%match "abc"/pcre] "abd")
+  ; assert_raises Not_found (fun () -> [%match "abc"/exc pcre] "abd")
+  ; assert_raises Not_found (fun () -> [%match "abc"/exc strings pcre] "abd")
+  ; assert_equal None  ([%match "abc"/strings pcre] "abd")
+  ; assert_equal "abc"  ([%match "abc"/exc strings pcre] "abc")
+  ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings pcre] "abc")
+  ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings pcre] "ac")
+  ; assert_equal "abc"  (Pcre.get_substring ([%match "ABC"/exc group i pcre] "abc") 0)
+  ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings pcre] "abc")
+
 let test_selective_match ctxt =
   ()
   ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings (!0,1)] "abc")
@@ -116,6 +131,7 @@ let test_envsubst_via_replace ctxt =
 
 let suite = "Test pa_ppx_perl" >::: [
       "simple_match"   >:: test_simple_match
+    ; "pcre simple_match"   >:: test_pcre_simple_match
     ; "selective_match"   >:: test_selective_match
     ; "search"   >:: test_search
     ; "single"   >:: test_single

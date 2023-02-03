@@ -103,7 +103,10 @@ type t =
 | Group
 | Strings
 | StringGroups of (int *bool) list
-| Exception [@@deriving show]
+| Exception
+| RePerl
+| Pcre
+[@@deriving show]
 
 let pp_hum pps = function
   Multi -> Fmt.(pf pps "m")
@@ -119,6 +122,8 @@ let pp_hum pps = function
      | (n,false) -> Fmt.(pf pps "%d" n) in
    Fmt.(pf pps "strings (%a)" (list ~sep:(const string ",") cgnum) l)
 | Exception -> Fmt.(pf pps "exc")
+| RePerl -> Fmt.(pf pps "re_perl")
+| Pcre -> Fmt.(pf pps "pcre")
 
 let fixed_only l =
   Std.filter (function StringGroups _ -> false | _ -> true) l
@@ -151,10 +156,15 @@ let convert e =
 
     | <:expr< strings >>::l -> Strings::(conv l)
     | <:expr< exc >>::l -> Exception::(conv l)
+    | <:expr< re_perl >>::l -> RePerl::(conv l)
+    | <:expr< pcre >>::l -> Pcre::(conv l)
     | [] -> []
     | _ -> badarg() in
   let (f,l) = Expr.unapplist e in
-  Std.uniquize (conv (f::l))
+  let l = Std.uniquize (conv (f::l)) in
+  if not (List.mem RePerl l || List.mem Pcre l) then
+    RePerl::l
+  else l
 
 let string_groups loc options ngroups =
   if not (List.mem Strings  options) && not(List.mem Group options) then
@@ -182,15 +192,23 @@ let compile_opts loc options =
   let case_insensitive = List.mem Insensitive options in
   let dotall = List.mem Single options in
   let multiline = List.mem Multi options in
-  let opts = [] in
-  let opts = if case_insensitive then <:expr< `Caseless >>::opts else opts in
-  let opts = if dotall then <:expr< `Dotall >>::opts else opts in
-  let opts = if multiline then <:expr< `Multiline >>::opts else opts in
-  convert_up_list_expr loc opts
+  if List.mem Pcre options then
+    let opts = [] in
+    let opts = if case_insensitive then <:expr< `CASELESS >>::opts else opts in
+    let opts = if dotall then <:expr< `DOTALL >>::opts else opts in
+    let opts = if multiline then <:expr< `MULTILINE >>::opts else opts in
+    convert_up_list_expr loc opts
+  else if List.mem RePerl options then
+    let opts = [] in
+    let opts = if case_insensitive then <:expr< `Caseless >>::opts else opts in
+    let opts = if dotall then <:expr< `Dotall >>::opts else opts in
+    let opts = if multiline then <:expr< `Multiline >>::opts else opts in
+    convert_up_list_expr loc opts
+  else assert false
 
 module Match = struct
 
-let build_string_converter loc ~options ngroups =
+let re_build_string_converter loc ~options ngroups =
   let open Options in
   let string_groups = Options.string_groups loc options ngroups in
   let group_exp (n,required) =
@@ -202,7 +220,7 @@ let build_string_converter loc ~options ngroups =
   let group_tuple = Expr.tuple loc group_exps in
   <:expr< (fun __g__ -> $exp:group_tuple$ ) >>
 
-let rec build_result loc ~options ngroups use_exception =
+let rec re_build_result loc ~options ngroups use_exception =
   let open Options in
   if List.mem Group options then
      if use_exception then
@@ -210,12 +228,43 @@ let rec build_result loc ~options ngroups use_exception =
      else
        <:expr< Re.exec_opt __re__ __subj__ >>
   else
-    let convf = build_string_converter loc ~options ngroups in
+    let convf = re_build_string_converter loc ~options ngroups in
      if use_exception then
-       let res = build_result loc ~options:[Group] ngroups true in
+       let res = re_build_result loc ~options:[Group] ngroups true in
        <:expr< $exp:convf$ $exp:res$ >>
      else
-       let res = build_result loc ~options:[Group] ngroups false in
+       let res = re_build_result loc ~options:[Group] ngroups false in
+       <:expr< match Option.map $exp:convf$ $exp:res$ with
+                 exception Not_found -> None
+               | rv -> rv
+                 >>
+
+let pcre_build_string_converter loc ~options ngroups =
+  let open Options in
+  let string_groups = Options.string_groups loc options ngroups in
+  let group_exp (n,required) =
+    if required then
+      <:expr< Pcre.get_substring __g__ $int:string_of_int n$ >>
+    else
+      <:expr< try Some(Pcre.get_substring __g__ $int:string_of_int n$) with Not_found -> None >> in
+  let group_exps = List.map group_exp string_groups in
+  let group_tuple = Expr.tuple loc group_exps in
+  <:expr< (fun __g__ -> $exp:group_tuple$ ) >>
+
+let rec pcre_build_result loc ~options ngroups use_exception =
+  let open Options in
+  if List.mem Group options then
+     if use_exception then
+       <:expr< Pcre.exec ~rex:__re__ __subj__ >>
+     else
+       <:expr< try Some (Pcre.exec ~rex:__re__ __subj__) with Not_found -> None >>
+  else
+    let convf = pcre_build_string_converter loc ~options ngroups in
+     if use_exception then
+       let res = pcre_build_result loc ~options:[Group] ngroups true in
+       <:expr< $exp:convf$ $exp:res$ >>
+     else
+       let res = pcre_build_result loc ~options:[Group] ngroups false in
        <:expr< match Option.map $exp:convf$ $exp:res$ with
                  exception Not_found -> None
                | rv -> rv
@@ -223,13 +272,16 @@ let rec build_result loc ~options ngroups use_exception =
 
 let validate_options modn loc options =
   let open Options in
+  if not (check_oneof ~l:[RePerl; Pcre] options) then
+    Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<re>>, <<pcre>>: %a"
+           modn (list ~sep:(const string " ") Options.pp_hum) options) ;
   if not (check_oneof ~l:[Strings; Group] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<strings>>, <<group>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Group; Strings] options in
+  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Group; Strings; RePerl; Pcre] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
@@ -238,14 +290,26 @@ let build_regexp loc ~options restr =
   let open Options in
   validate_options "match" loc options ;
   let use_exception = List.mem Exception options in
-  let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
-  let ngroups = Re.group_count re in
-  let compile_opt_expr = compile_opts loc options in
-  let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-  let result = build_result loc ~options ngroups use_exception in
-  <:expr< let __re__ = $exp:regexp_expr$ in
-          fun __subj__->
+  if List.mem Pcre options then
+    let re = Pcre.regexp (Scanf.unescaped restr) in
+    let ngroups = 1 + Pcre.capturecount re in
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    let result = pcre_build_result loc ~options ngroups use_exception in
+    <:expr< let __re__ = $exp:regexp_expr$ in
+            fun __subj__->
             $exp:result$ >>
+  else if List.mem RePerl options then
+    let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
+    let ngroups = Re.group_count re in
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    let result = re_build_result loc ~options ngroups use_exception in
+    <:expr< let __re__ = $exp:regexp_expr$ in
+            fun __subj__->
+            $exp:result$ >>
+  else Fmt.(raise_failwithf loc "match extension: neither <<re>> nor <<pcre>> were found in options: %a\n"
+            (list ~sep:(const string " ") Options.pp_hum) options)
 end
 
 module Split = struct
@@ -258,7 +322,7 @@ let rec build_result loc ~options ngroups =
     <:expr< Re.split_full __re__ __subj__ >>
   else if List.mem Strings options then
     let converter_fun_exp =
-      let convf = Match.build_string_converter loc ~options ngroups in
+      let convf = Match.re_build_string_converter loc ~options ngroups in
       <:expr< function `Text s -> `Text s
                      | `Delim __g__ -> `Delim ($exp:convf$ __g__) >> in
     <:expr< List.map $exp:converter_fun_exp$ (Re.split_full __re__ __subj__) >>
@@ -333,7 +397,7 @@ let build_expr ~force_cgroups loc patstr =
 
 let validate_options modn loc options =
   let open Options in
-  let fl = forbidden_options  ~l:[Expr] options in
+  let fl = forbidden_options  ~l:[Expr; RePerl; Pcre] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
@@ -356,7 +420,7 @@ let validate_options modn loc options =
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  let fl = forbidden_options  ~l:[Global; Multi; Single; Insensitive; Expr] options in
+  let fl = forbidden_options  ~l:[Global; Multi; Single; Insensitive; Expr; RePerl; Pcre] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
@@ -374,14 +438,14 @@ let validate_options modn loc options =
 end
 
 let rewrite_match arg = function
-  <:expr:< [%match $str:s$ ;] >> -> Match.build_regexp loc ~options:[] s
+  <:expr:< [%match $str:s$ ;] >> -> Match.build_regexp loc ~options:[Options.RePerl] s
 | <:expr:< [%match $str:s$ / $exp:optexpr$ ;] >> ->
    let options = Options.convert optexpr in
    Match.build_regexp loc ~options s
 | _ -> assert false
 
 let rewrite_split arg = function
-  <:expr:< [%split $str:s$ ;] >> -> Split.build_regexp loc ~options:[] s
+  <:expr:< [%split $str:s$ ;] >> -> Split.build_regexp loc ~options:[Options.RePerl] s
 | <:expr:< [%split $str:s$ / $exp:optexpr$ ;] >> ->
    let options = Options.convert optexpr in
    Split.build_regexp loc ~options s
@@ -391,7 +455,7 @@ let rewrite_pattern arg = function
   <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
    let options = Options.convert optexpr in
    Pattern.build_pattern loc ~force_cgroups:false ~options s
-| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[] s
+| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[Options.RePerl] s
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_pattern: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
@@ -399,7 +463,7 @@ let rewrite_subst arg = function
   <:expr:< [%subst $str:restr$ / $str:patstr$ / $exp:optexpr$ ;] >> ->
    let options = Options.convert optexpr in
    Subst.build_subst loc ~options restr patstr
-| <:expr:< [%subst $str:restr$ / $str:patstr$ ;] >> -> Subst.build_subst loc ~options:[] restr patstr
+| <:expr:< [%subst $str:restr$ / $str:patstr$ ;] >> -> Subst.build_subst loc ~options:[Options.RePerl] restr patstr
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_subst: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
