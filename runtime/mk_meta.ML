@@ -13,16 +13,16 @@ Arg.(parse [
 ;;
 
 Fmt.(pf stdout {|
-# Specifications for the "pa_ppx_perl_runtime" package:
+# Specifications for the "pa_ppx_regexp_runtime" package:
 requires = "fmt,re,pcre"
 version = "%s"
-description = "pa_ppx_perl runtime support"
+description = "pa_ppx_regexp runtime support"
 
 # For linking
-archive(byte) = "pa_ppx_perl_runtime.cma"
-archive(native) = "pa_ppx_perl_runtime.cmxa"
+archive(byte) = "pa_ppx_regexp_runtime.cma"
+archive(native) = "pa_ppx_regexp_runtime.cmxa"
 
 # For the toploop:
-archive(byte,toploop) = "pa_ppx_perl_runtime.cma"
+archive(byte,toploop) = "pa_ppx_regexp_runtime.cma"
 
 |} version)

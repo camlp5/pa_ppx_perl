@@ -231,7 +231,7 @@ let test_pcre_envsubst_via_replace ctxt =
   let f = function "A" -> "res1" | "B" -> "res2" in
   assert_equal "...res1...res2..." (pcre_envsubst f {|...$(A)...${B}...|})
 
-let suite = "Test pa_ppx_perl" >::: [
+let suite = "Test pa_ppx_regexp" >::: [
       "simple_match"   >:: test_simple_match
     ; "pcre simple_match"   >:: test_pcre_simple_match
     ; "selective_match"   >:: test_selective_match

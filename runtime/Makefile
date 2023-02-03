@@ -9,7 +9,7 @@ DESTDIR=
 RM=rm
 
 PACKAGES := fmt,camlp5,pcre
-TARGET := pa_ppx_perl_runtime.cma
+TARGET := pa_ppx_regexp_runtime.cma
 ML := runtime.ml
 TOOLSML = mk_meta.ml
 MLI := 
@@ -19,18 +19,18 @@ CMX := $(ML:.ml=.cmx)
 CMT := $(ML:.ml=.cmt)
 CMTI := $(MLI:.mli=.cmti)
 
-OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Pa_ppx_perl
+OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Pa_ppx_regexp
 
 all: $(TARGET) $(TARGET:.cma=.cmxa) META
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 doc: $(CMT) $(CMTI)
 
-pa_ppx_perl.cmo: $(CMO)
-	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o pa_ppx_perl.cmo $^
+pa_ppx_regexp.cmo: $(CMO)
+	$(OCAMLFIND) ocamlc $(DEBUG) -pack -o pa_ppx_regexp.cmo $^
 
-pa_ppx_perl.cmx: $(CMO:.cmo=.cmx)
-	$(OCAMLFIND) ocamlopt $(DEBUG) -pack -o pa_ppx_perl.cmx $^
+pa_ppx_regexp.cmx: $(CMO:.cmo=.cmx)
+	$(OCAMLFIND) ocamlopt $(DEBUG) -pack -o pa_ppx_regexp.cmx $^
 
 META: mk_meta
 	./mk_meta > META
@@ -43,16 +43,16 @@ mk_meta.ml: mk_meta.ML
 
 install:: META
 	mkdir -p $(DESTDIR)/lib
-	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl_runtime -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) pa_ppx_perl.cmx pa_ppx_perl.cmi $(wildcard *.cmt*)
+	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_regexp_runtime -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) pa_ppx_regexp.cmx pa_ppx_regexp.cmi $(wildcard *.cmt*)
 
 clean::
 	rm -rf META mk_meta mk_meta.ml
 
-$(TARGET): pa_ppx_perl.cmo
-	$(OCAMLFIND) ocamlc $(DEBUG) pa_ppx_perl.cmo -a -o $(TARGET)
+$(TARGET): pa_ppx_regexp.cmo
+	$(OCAMLFIND) ocamlc $(DEBUG) pa_ppx_regexp.cmo -a -o $(TARGET)
 
-$(TARGET:.cma=.cmxa): pa_ppx_perl.cmx
-	$(OCAMLFIND) ocamlopt $(DEBUG) pa_ppx_perl.cmx -a -o $(TARGET:.cma=.cmxa)
+$(TARGET:.cma=.cmxa): pa_ppx_regexp.cmx
+	$(OCAMLFIND) ocamlopt $(DEBUG) pa_ppx_regexp.cmx -a -o $(TARGET:.cma=.cmxa)
 
 $(TARGET): $(CMO)
 $(TARGET:.cma=.cmxa): $(CMO:.cmo=.cmx)

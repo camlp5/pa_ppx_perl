@@ -1,4 +1,4 @@
-`pa_ppx_perl`: a PPX Rewriter for Perl-ish regexp operations
+`pa_ppx_regexp`: a PPX Rewriter for Perl-ish regexp operations
 ============================================================
 :toc:
 :toc-placement: preamble
@@ -37,7 +37,7 @@ hints.
 
 == Installation
 
-To install, it should suffice to `opam install pa_ppx_perl`; from
+To install, it should suffice to `opam install pa_ppx_regexp`; from
 source, `make all install` in the top-level directory should do the
 trick.
 
@@ -46,14 +46,14 @@ trick.
 === From the OCaml compiler
 
 To invoke the PPX rewriter for a source file, the package
-`pa_ppx_perl` must be specified, viz.
+`pa_ppx_regexp` must be specified, viz.
 
 ```
-ocamlfind ocamlc -package pa_ppx_perl -c -syntax camlp5o ppx_perl.ml
+ocamlfind ocamlc -package pa_ppx_regexp -c -syntax camlp5o ppx_regexp.ml
 ```
 and similarly when linking (there is a small runtime support package required
 ```
-ocamlfind ocamlc -package pa_ppx_perl -linkpkg -linkall -o ppx_perl.exe ppx_perl.cmo
+ocamlfind ocamlc -package pa_ppx_regexp -linkpkg -linkall -o ppx_regexp.exe ppx_regexp.cmo
 ```
 
 === From the OCaml toplevel
@@ -90,7 +90,7 @@ Additional Camlp5 directives:
 /home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp-streams/camlp_streams.cma: loaded
 /home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp5: added to search path
 /home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/camlp5/camlp5o.cma: loaded
-# #require "pa_ppx_perl" ;;
+# #require "pa_ppx_regexp" ;;
 ```
 
 

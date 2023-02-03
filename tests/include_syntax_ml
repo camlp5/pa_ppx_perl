@@ -1,7 +1,7 @@
 #use "topfind.camlp5";;
 #camlp5o ;;
 #require "ounit2";;
-#require "pa_ppx_perl";;
+#require "pa_ppx_regexp";;
 open OUnit2 ;;
 
 (*

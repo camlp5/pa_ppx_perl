@@ -71,7 +71,7 @@ let test_subst ctxt =
   ; assert_raises_exn_pattern "subst extension: can specify at most one of <<s>>, <<m>>"
       (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /s m] |foo})
 
-let suite = "Test pa_ppx_perl syntax" >::: [
+let suite = "Test pa_ppx_regexp syntax" >::: [
       "match"   >:: test_match
     ; "split"   >:: test_split
     ; "pattern"   >:: test_pattern

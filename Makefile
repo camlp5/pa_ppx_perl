@@ -8,7 +8,7 @@ WD=$(shell pwd)
 DESTDIR=
 RM=rm
 
-SYSDIRS= runtime pa_perl
+SYSDIRS= runtime pa_regexp
 
 TESTDIRS= tests
 
@@ -21,25 +21,31 @@ sys:
 test: all
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
 
-mdx-test::
-	$(LAUNCH) ocaml-mdx test README.asciidoc
-	test -f README.asciidoc.corrected && diff -Bwiu README.asciidoc README.asciidoc.corrected
+mdx-test:: README.asciidoc.TEST
+
+.PRECIOUS: %.asciidoc.corrected
+
+%.asciidoc.corrected: %.asciidoc
+	$(LAUNCH) ocaml-mdx test -o $@ $^
+
+%.asciidoc.TEST: %.asciidoc.corrected %.asciidoc
+	diff -Bwiu $^
 
 META: all
-	$(JOINMETA) -rewrite pa_ppx_perl_runtime:pa_ppx_perl.runtime \
-			-direct-include pa_perl \
+	$(JOINMETA) -rewrite pa_ppx_regexp_runtime:pa_ppx_regexp.runtime \
+			-direct-include pa_regexp \
 			-wrap-subdir runtime:runtime > META
 
 install: META
-	$(OCAMLFIND) remove pa_ppx_perl || true
-	$(OCAMLFIND) install pa_ppx_perl META local-install/lib/*/*.*
+	$(OCAMLFIND) remove pa_ppx_regexp || true
+	$(OCAMLFIND) install pa_ppx_regexp META local-install/lib/*/*.*
 
 uninstall:
-	$(OCAMLFIND) remove pa_ppx_perl || true
+	$(OCAMLFIND) remove pa_ppx_regexp || true
 
 clean::
 	set -e; for i in $(SYSDIRS) $(TESTDIRS); do cd $$i; $(MAKE) clean; cd ..; done
-	rm -rf docs local-install $(BATCHTOP) META
+	rm -rf docs local-install $(BATCHTOP) META *.corrected
 
 depend:
 	set -e; for i in $(SYSDIRS) $(TESTDIRS); do cd $$i; $(MAKE) depend; cd ..; done

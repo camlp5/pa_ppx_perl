@@ -9,8 +9,8 @@ DESTDIR=
 RM=rm
 
 PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,camlp5.extend,pa_ppx.deriving_plugins.std
-TARGET := pa_ppx_perl.cma
-ML := pa_perl.ml
+TARGET := pa_ppx_regexp.cma
+ML := pa_regexp.ml
 TOOLSML = mk_meta.ml
 CMO := $(ML:.ml=.cmo)
 CMI := $(ML:.ml=.cmi)
@@ -22,15 +22,15 @@ export MIGRATE_CFLAGS= -ppopt -pa_import-I -ppopt . -ppopt -pa_passthru-debug \
 	-ppopt -pa_import-package -ppopt $(PACKAGES)
 export MIGRATE_PACKAGES=pa_ppx.import,pa_ppx_migrate
 
-all: $(TARGET) $(TARGET:.cma=.cmxa) camlp5.pa_ppx_perl camlp5.pa_ppx_perl.opt META
+all: $(TARGET) $(TARGET:.cma=.cmxa) camlp5.pa_ppx_regexp camlp5.pa_ppx_regexp.opt META
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 doc: $(CMT) $(CMTI)
 
-camlp5.pa_ppx_perl: $(TARGET)
+camlp5.pa_ppx_regexp: $(TARGET)
 	$(MKCAMLP5) -package fmt,re,camlp5.pa_r,camlp5.pr_r,pa_ppx.base $(TARGET) -o $@
 
-camlp5.pa_ppx_perl.opt: $(TARGET:.cma=.cmxa)
+camlp5.pa_ppx_regexp.opt: $(TARGET:.cma=.cmxa)
 	$(MKCAMLP5OPT) -package fmt,re,camlp5.pa_r,camlp5.pr_r,pa_ppx.base $(TARGET:.cma=.cmxa) -o $@
 
 META: mk_meta
@@ -45,10 +45,10 @@ mk_meta.ml: mk_meta.ML
 install:: META
 	mkdir -p $(DESTDIR)/lib
 	touch META
-	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_perl -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
+	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_regexp -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
 
 clean::
-	rm -rf META camlp5.pa_ppx_perl* mk_meta mk_meta.ml
+	rm -rf META camlp5.pa_ppx_regexp* mk_meta mk_meta.ml
 
 $(TARGET): $(CMO)
 	$(OCAMLFIND) ocamlc $(DEBUG) $(CMO) -a -o $(TARGET)

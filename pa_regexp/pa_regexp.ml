@@ -334,10 +334,10 @@ let rec pcre_build_result loc ~options ngroups =
       let convf = Match.pcre_build_string_converter loc ~options ngroups in
       <:expr< function `Text s -> `Text s
                        | `Delim __g__ -> `Delim ($exp:convf$ __g__) >> in
-    <:expr< List.map $exp:converter_fun_exp$ (Pa_ppx_perl.Runtime.pcre_full_split __re__ __subj__) >>
+    <:expr< List.map $exp:converter_fun_exp$ (Pa_ppx_regexp.Runtime.pcre_full_split __re__ __subj__) >>
 
   else if List.mem Raw options then
-    <:expr< Pa_ppx_perl.Runtime.pcre_full_split __re__ __subj__ >>
+    <:expr< Pa_ppx_regexp.Runtime.pcre_full_split __re__ __subj__ >>
   else
     <:expr< Pcre.split ~rex:__re__ __subj__ >>
 
@@ -404,7 +404,7 @@ let build_string loc ~force_cgroups ~options patstr =
                        cgroup_extract_expr nstr
                     | (_, _, _, Some exps) ->
                        parse_expr exps
-                    | _ -> Fmt.(raise_failwithf loc "pa_ppx_perl: unrecognized pattern: <<%a>>" Dump.string patstr)
+                    | _ -> Fmt.(raise_failwithf loc "pa_ppx_regexp: unrecognized pattern: <<%a>>" Dump.string patstr)
                ) in
   let listexpr = convert_up_list_expr loc parts_exps in
   if !has_cgroups then
@@ -513,7 +513,7 @@ let rewrite_pattern arg = function
    let options = Options.convert optexpr in
    Pattern.build_pattern loc ~force_cgroups:false ~options s
 | <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[Options.RePerl] s
-| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_pattern: unsupported extension <<%a>>"
+| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "pa_regexp.rewrite_pattern: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
 let rewrite_subst arg = function
@@ -521,7 +521,7 @@ let rewrite_subst arg = function
    let options = Options.convert optexpr in
    Subst.build_subst loc ~options restr patstr
 | <:expr:< [%subst $str:restr$ / $str:patstr$ ;] >> -> Subst.build_subst loc ~options:[Options.RePerl] restr patstr
-| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "Pa_perl.rewrite_subst: unsupported extension <<%a>>"
+| e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "pa_regexp.rewrite_subst: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
 let install () = 
@@ -541,7 +541,7 @@ let ef = EF.{ (ef) with
     fun arg fallback ->
       Some (rewrite_subst arg z)
   ] } in
-  Pa_passthru.(install { name = "pa_perl"; ef =  ef ; pass = None ; before = [] ; after = [] })
+  Pa_passthru.(install { name = "pa_regexp"; ef =  ef ; pass = None ; before = [] ; after = [] })
 ;;
 
 install();;

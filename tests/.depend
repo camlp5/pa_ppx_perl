@@ -1,8 +1,8 @@
-ppx_perl.cmo ya_wrap_ocamlfind.cmo join_meta.cmo syntax_test.cmo ppx_perl.exe syntax_test.exe ya-wrap-ocamlfind join_meta: ../local-install/lib/pa_ppx_perl/META
+ppx_regexp.cmo ya_wrap_ocamlfind.cmo join_meta.cmo syntax_test.cmo ppx_regexp.exe syntax_test.exe ya-wrap-ocamlfind join_meta: ../local-install/lib/pa_ppx_regexp/META
 join_meta.cmo :
 join_meta.cmx :
-ppx_perl.cmo :
-ppx_perl.cmx :
+ppx_regexp.cmo :
+ppx_regexp.cmx :
 syntax_test.cmo :
 syntax_test.cmx :
 ya_wrap_ocamlfind.cmo :
