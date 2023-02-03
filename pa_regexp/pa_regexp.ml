@@ -495,32 +495,32 @@ let validate_options modn loc options =
 end
 
 let rewrite_match arg = function
-  <:expr:< [%match $str:s$ ;] >> -> Match.build_regexp loc ~options:[Options.RePerl] s
-| <:expr:< [%match $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%match $str:s$ ] >> -> Match.build_regexp loc ~options:[Options.RePerl] s
+| <:expr:< [%match $str:s$ / $exp:optexpr$ ] >> ->
    let options = Options.convert optexpr in
    Match.build_regexp loc ~options s
 | _ -> assert false
 
 let rewrite_split arg = function
-  <:expr:< [%split $str:s$ ;] >> -> Split.build_regexp loc ~options:[Options.RePerl] s
-| <:expr:< [%split $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%split $str:s$ ] >> -> Split.build_regexp loc ~options:[Options.RePerl] s
+| <:expr:< [%split $str:s$ / $exp:optexpr$ ] >> ->
    let options = Options.convert optexpr in
    Split.build_regexp loc ~options s
 | _ -> assert false
 
 let rewrite_pattern arg = function
-  <:expr:< [%pattern $str:s$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%pattern $str:s$ / $exp:optexpr$ ] >> ->
    let options = Options.convert optexpr in
    Pattern.build_pattern loc ~force_cgroups:false ~options s
-| <:expr:< [%pattern $str:s$ ;] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[Options.RePerl] s
+| <:expr:< [%pattern $str:s$ ] >> -> Pattern.build_pattern loc ~force_cgroups:false ~options:[Options.RePerl] s
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "pa_regexp.rewrite_pattern: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
 let rewrite_subst arg = function
-  <:expr:< [%subst $str:restr$ / $str:patstr$ / $exp:optexpr$ ;] >> ->
+  <:expr:< [%subst $str:restr$ / $str:patstr$ / $exp:optexpr$ ] >> ->
    let options = Options.convert optexpr in
    Subst.build_subst loc ~options restr patstr
-| <:expr:< [%subst $str:restr$ / $str:patstr$ ;] >> -> Subst.build_subst loc ~options:[Options.RePerl] restr patstr
+| <:expr:< [%subst $str:restr$ / $str:patstr$ ] >> -> Subst.build_subst loc ~options:[Options.RePerl] restr patstr
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "pa_regexp.rewrite_subst: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 
@@ -528,16 +528,16 @@ let install () =
 let ef = EF.mk () in 
 let ef = EF.{ (ef) with
             expr = extfun ef.expr with [
-    <:expr:< [%match $exp:_$ ;] >> as z ->
+    <:expr:< [%match $exp:_$ ] >> as z ->
     fun arg fallback ->
       Some (rewrite_match arg z)
-  | <:expr:< [%split $exp:_$ ;] >> as z ->
+  | <:expr:< [%split $exp:_$ ] >> as z ->
     fun arg fallback ->
       Some (rewrite_split arg z)
-  | <:expr:< [%pattern $exp:_$ ;] >> as z ->
+  | <:expr:< [%pattern $exp:_$ ] >> as z ->
     fun arg fallback ->
       Some (rewrite_pattern arg z)
-  | <:expr:< [%subst $exp:_$ ;] >> as z ->
+  | <:expr:< [%subst $exp:_$ ] >> as z ->
     fun arg fallback ->
       Some (rewrite_subst arg z)
   ] } in
