@@ -19,10 +19,10 @@ let assert_raises_exn_pattern pattern f =
 
 let test_match ctxt =
   ()
-  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/exc group] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/exc raw] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/ strings] |foo} ; ())
-  ; assert_raises_exn_pattern "match extension.*at most one of.*strings.*group"
-      (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/group strings] |foo})
+  ; assert_raises_exn_pattern "match extension.*at most one of.*strings.*raw"
+      (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/raw strings] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/m] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/s] |foo} ; ())
   ; assert_raises_exn_pattern "match extension.*at most one of.*<<s>>.*<<m>>"
@@ -34,11 +34,11 @@ let test_match ctxt =
 
 let test_split ctxt =
   ()
-  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/exc group] |foo} ; ())
+  ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/exc raw] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/ strings] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"] |foo} ; ())
-  ; assert_raises_exn_pattern "split extension.*at most one of.*strings.*group"
-      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/group strings] |foo})
+  ; assert_raises_exn_pattern "split extension.*at most one of.*strings.*raw"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/raw strings] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/m] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/s] |foo} ; ())
   ; assert_raises_exn_pattern "split extension.*at most one of.*<<s>>.*<<m>>"
@@ -47,7 +47,7 @@ let test_split ctxt =
       (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/e] |foo})
   ; assert_raises_exn_pattern "split extension.*forbidden.*: g"
       (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/g] |foo})
-  ; assert_raises_exn_pattern "split extension: must specify one of <<strings>>, <<group>>"
+  ; assert_raises_exn_pattern "split extension: must specify one of <<strings>>, <<raw>>"
       (fun () -> PAPR.Implem.pa1 {foo| [%split "a(b)c"] |foo})
 
 let test_pattern ctxt =
@@ -60,8 +60,8 @@ let test_pattern ctxt =
 let test_subst ctxt =
   ()
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%subst "abc" / "def"] |foo} ; ())
-  ; assert_raises_exn_pattern "subst extension: forbidden option: group"
-      (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /group] |foo})
+  ; assert_raises_exn_pattern "subst extension: forbidden option: raw"
+      (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /raw] |foo})
   ; assert_raises_exn_pattern "subst extension: can specify at most one of <<s>>, <<m>>"
       (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /s m] |foo})
 

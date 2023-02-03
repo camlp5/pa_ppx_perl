@@ -4,7 +4,7 @@ open OUnit2
 
 let test_simple_match ctxt =
   ()
-  ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc group] "abc") 0)
+  ; assert_equal "abc"  (Re.Group.get ([%match "abc"/exc raw] "abc") 0)
   ; assert_equal (Some "abc")  ([%match "abc"] "abc")
   ; assert_equal (Some "abc")  ([%match "abc"/strings] "abc")
   ; assert_equal None  ([%match "abc"] "abd")
@@ -14,12 +14,12 @@ let test_simple_match ctxt =
   ; assert_equal "abc"  ([%match "abc"/exc strings] "abc")
   ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings] "abc")
   ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings] "ac")
-  ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc group i] "abc") 0)
+  ; assert_equal "abc"  (Re.Group.get ([%match "ABC"/exc raw i] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings] "abc")
 
 let test_pcre_simple_match ctxt =
   ()
-  ; assert_equal "abc"  (Pcre.get_substring ([%match "abc"/exc group pcre] "abc") 0)
+  ; assert_equal "abc"  (Pcre.get_substring ([%match "abc"/exc raw pcre] "abc") 0)
   ; assert_equal (Some "abc")  ([%match "abc"/pcre] "abc")
   ; assert_equal (Some "abc")  ([%match "abc"/strings pcre] "abc")
   ; assert_equal None  ([%match "abc"/pcre] "abd")
@@ -29,7 +29,7 @@ let test_pcre_simple_match ctxt =
   ; assert_equal "abc"  ([%match "abc"/exc strings pcre] "abc")
   ; assert_equal ("abc", Some "b")  ([%match "a(b)c"/exc strings pcre] "abc")
   ; assert_equal ("ac", None)  ([%match "a(?:(b)?)c"/exc strings pcre] "ac")
-  ; assert_equal "abc"  (Pcre.get_substring ([%match "ABC"/exc group i pcre] "abc") 0)
+  ; assert_equal "abc"  (Pcre.get_substring ([%match "ABC"/exc raw i pcre] "abc") 0)
   ; assert_equal ("abc", Some "a", Some "b", Some "c")  ([%match "(a)(b)(c)"/exc strings pcre] "abc")
 
 let test_selective_match ctxt =
@@ -91,6 +91,10 @@ let test_simple_split ctxt =
   ()
   ; assert_equal ["bb"]  ([%split "a"] "bb")
 
+let test_pcre_simple_split ctxt =
+  ()
+  ; assert_equal ["bb"]  ([%split "a"/pcre] "bb")
+
 let test_delim_split ctxt =
   ()
   ; assert_equal [`Delim"a"; `Text "b";`Delim"a"; `Text "b"; `Delim"a"]  ([%split "a"/ strings] "ababa")
@@ -100,19 +104,28 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"]  ([%split "a(c)"/ strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"]  ([%split "a(c)?"/ strings !0] "abacba")
 
+let test_pcre_raw_delim_split ctxt =
+  ()
+  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre strings] "ababa")
+  ; assert_equal Pcre.[Delim"a"; Text "b";Delim"a"; Delim"a"; Text "b"; Delim"a"]  ([%split "a"/pcre strings] "abaaba")
+  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre strings] "abacba")
+  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre strings] "acbacbac")
+  ; assert_equal Pcre.[Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")]  ([%split "a(c)"/pcre strings !1] "acbacbac")
+  ; assert_equal Pcre.[Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup]  ([%split "a(c)?"/pcre strings !0] "abacba")
+
 let test_string_pattern ctxt =
   ()
-  ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc group] "abc"))
-  ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc group] "abc"))
-  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc group] "abc"))
-  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc group] "abc"))
+  ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc raw] "abc"))
   ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|}])
 
 let test_expr_pattern ctxt =
   ()
-  ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc group] "abc"))
-  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc group] "abc"))
-  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc group] "abc"))
+  ; assert_equal "abc"  ([%pattern "$0$" / e] ([%match "abc"/exc raw] "abc"))
+  ; assert_equal "abcx"  ([%pattern {|$0$ ^ "x"|} / e] ([%match "abc"/exc raw] "abc"))
+  ; assert_equal "abcx"  (let x = "x" in [%pattern {|$0$ ^ x|} / e] ([%match "abc"/exc raw] "abc"))
   ; assert_equal "x"  (let x = "x" in [%pattern {|"" ^ x|} / e])
 
 let test_string_subst ctxt =
@@ -154,7 +167,9 @@ let suite = "Test pa_ppx_perl" >::: [
     ; "single"   >:: test_single
     ; "multiline"   >:: test_multiline
     ; "simple_split"   >:: test_simple_split
+    ; "pcre simple_split"   >:: test_pcre_simple_split
     ; "delim_split"   >:: test_delim_split
+    ; "pcre delim_split"   >:: test_pcre_raw_delim_split
     ; "string_pattern"   >:: test_string_pattern
     ; "expr_pattern"   >:: test_expr_pattern
     ; "string_subst"   >:: test_string_subst
