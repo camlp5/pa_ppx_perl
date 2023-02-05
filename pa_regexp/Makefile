@@ -8,7 +8,7 @@ include $(TOP)/config/Makefile
 DESTDIR=
 RM=rm
 
-PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,pa_ppx.deriving_plugins.std
+PACKAGES := $(PACKAGES),fmt,re,pa_ppx.base,pa_ppx.deriving_plugins.std,pa_ppx_static
 TARGET := pa_ppx_regexp.cma
 ML := pa_regexp.ml
 TOOLSML = mk_meta.ml

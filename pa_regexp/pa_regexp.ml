@@ -294,7 +294,7 @@ let build_regexp loc ~options restr =
     let re = Pcre.regexp (Scanf.unescaped restr) in
     let ngroups = 1 + Pcre.capturecount re in
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< [%static Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ ] >> in
     let result = pcre_build_result loc ~options ngroups use_exception in
     <:expr< let __re__ = $exp:regexp_expr$ in
             fun __subj__->
@@ -303,7 +303,7 @@ let build_regexp loc ~options restr =
     let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
     let ngroups = Re.group_count re in
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< [%static Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ ] >> in
     let result = re_build_result loc ~options ngroups use_exception in
     <:expr< let __re__ = $exp:regexp_expr$ in
             fun __subj__->
@@ -352,7 +352,7 @@ let build_regexp loc ~options restr =
              (list Options.pp) options)
     else
       let compile_opt_expr = compile_opts loc options in
-      let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+      let regexp_expr = <:expr< [%static Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ ] >> in
       let result = re_build_result loc ~options ngroups in
       <:expr< let __re__ = $exp:regexp_expr$ in
               fun __subj__->
@@ -365,7 +365,7 @@ let build_regexp loc ~options restr =
              (list Options.pp) options)
     else
       let compile_opt_expr = compile_opts loc options in
-      let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+      let regexp_expr = <:expr< [%static Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ ] >> in
       let result = pcre_build_result loc ~options ngroups in
       <:expr< let __re__ = $exp:regexp_expr$ in
               fun __subj__->
@@ -479,7 +479,7 @@ let validate_options modn loc options =
     let global = List.mem Global options in
     let global = if global then <:expr< true >> else <:expr< false >> in
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< [%static Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ ] >> in
     let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
     <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
   else if List.mem Pcre options then
@@ -487,7 +487,7 @@ let validate_options modn loc options =
     let global = List.mem Global options in
     let replacef = if global then <:expr< Pcre.substitute_substrings >> else <:expr< Pcre.substitute_substrings_first >> in
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< [%static Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ ] >> in
     let patexpr = Pattern.build_pattern loc ~force_cgroups:true ~options:(Std.intersect [Expr;RePerl;Pcre] options) patstr in
     <:expr< $exp:replacef$ ~rex:$exp:regexp_expr$ ~subst:$exp:patexpr$ >>
   else Fmt.(raise_failwithf loc "subst extension: neither <<re>> nor <<pcre>> were found in options: %a\n"
@@ -541,7 +541,7 @@ let ef = EF.{ (ef) with
     fun arg fallback ->
       Some (rewrite_subst arg z)
   ] } in
-  Pa_passthru.(install { name = "pa_regexp"; ef =  ef ; pass = None ; before = [] ; after = [] })
+  Pa_passthru.(install { name = "pa_regexp"; ef =  ef ; pass = None ; before = ["pa_static"] ; after = [] })
 ;;
 
 install();;
