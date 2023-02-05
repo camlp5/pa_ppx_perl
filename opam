@@ -19,7 +19,7 @@ depends: [
   "camlp5"      { >= "8.00.04" }
   "pa_ppx"      { >= "0.10" }
   "pa_ppx_migrate"      { >= "0.09" }
-  "pa_ppx_static"      { >= "0.01" }
+  "pa_ppx_static"
   "not-ocamlfind" { >= "0.09" }
   "ounit" {with-test}
   "fmt"
