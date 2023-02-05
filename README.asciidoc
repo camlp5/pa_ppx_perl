@@ -71,14 +71,6 @@ Findlib has been successfully loaded. Additional directives:
   #thread;;                 to enable threads
 
 - : unit = ()
-File "/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/ocaml/topfind.camlp5", line 7, characters 4-27:
-7 |     Toploop.directive_table
-        ^^^^^^^^^^^^^^^^^^^^^^^
-Alert deprecated: Toploop.directive_table
-File "/home/chet/Hack/Opam-2.1.2/GENERIC/4.14.0/lib/ocaml/topfind.camlp5", line 20, characters 4-27:
-20 |     Toploop.directive_table
-         ^^^^^^^^^^^^^^^^^^^^^^^
-Alert deprecated: Toploop.directive_table
 Additional Camlp5 directives:
   #camlp5o;;                to load camlp5 (standard syntax)
   #camlp5r;;                to load camlp5 (revised syntax)

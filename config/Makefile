@@ -29,7 +29,7 @@ top: all
 	$(YAWRAP) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -c $<
 
 .ml.cmo:
-	$(LAUNCH) $(YAWRAP) $(NOT_OCAMLFIND) preprocess $(OCAMLCFLAGS) -package $(PACKAGES),$(PRPACKAGE) $< > $*_ppo.ml
+#	$(LAUNCH) $(YAWRAP) $(NOT_OCAMLFIND) preprocess $(OCAMLCFLAGS) -package $(PACKAGES),$(PRPACKAGE) $< > $*_ppo.ml
 #	$(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o -c $*_ppo.ml
 	$(LAUNCH) $(YAWRAP) $(OCAMLFIND) ocamlc $(DEBUG) $(WARNERR) $(OCAMLCFLAGS) -package $(PACKAGES) -c $<
 
@@ -46,9 +46,17 @@ top: all
 	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES),pa_ppx_dock -syntax $(SYNTAX) -bin-annot -c $< -o .cmt/$*.cmi
 	cp .cmt/$*.cmti $*.cmti
 
+.PRECIOUS: %.asciidoc.corrected
+
+%.asciidoc.corrected: %.asciidoc
+	$(LAUNCH) ocaml-mdx test -o $@ $<
+
+%.asciidoc.TEST: %.asciidoc.corrected %.asciidoc
+	diff -Bwiu $^
+
 .SUFFIXES: .cmo .cmi .ml .mli .cmx .cma .cmxa .cmt .cmti .byte .opt
 
 clean::
-	$(RM) -rf *.cm* *.o *.a *.byte *.log *.cache *ppo *ppo.ml _build/* .cmt *.odoc
+	$(RM) -rf *.cm* *.o *.a *.byte *.log *.cache *ppo *ppo.ml _build/* .cmt *.odoc *.corrected
 
 realclean:: clean
