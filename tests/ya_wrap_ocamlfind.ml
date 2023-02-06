@@ -22,9 +22,9 @@ let discover_args f =
   let f' = open_in f in
   let line1 = input_line f' in
   close_in f';
-  match [%match {|^\(\*\*(.*?)\*\)|} / strings] line1 with
+  match [%match {|^\(\*\*(.*?)\*\)|} / strings !1] line1 with
   | None -> ""
-  | Some (_, Some params) -> envsubst params
+  | Some params -> envsubst params
 
 let () = 
   let cmd, files =

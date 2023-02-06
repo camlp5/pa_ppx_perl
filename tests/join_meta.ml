@@ -23,8 +23,8 @@ let direct_include = ref ""
 let wrap_subdirs = ref []
 
 let split2 ~msg s =
-  match [%match {|^([^:]+):([^:]+)$|} / strings] s with
-    Some (_, Some name, Some subdir) -> (name, subdir)
+  match [%match {|^([^:]+):([^:]+)$|} / strings (!1, !2)] s with
+    Some (name, subdir) -> (name, subdir)
   | _ -> failwith Fmt.(str "%s: invalid arg <<%s>>" msg s)
 ;;
 
