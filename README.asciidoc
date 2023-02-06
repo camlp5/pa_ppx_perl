@@ -31,7 +31,7 @@ OCaml.  This package supports:
 All of these support transparent syntax for "modifiers" in the style
 of Perl's modifiers, and a few extra ones for OCaml specifically.
 
-NOTE WELL that sometimes `ocaml-re`'s Perl mode differs from `pcre`;
+NOTE WELL that sometimes `ocaml-re` 's Perl mode differs from `pcre`;
 that is why both are supported.  In the examples, I'll show usage of
 both, and will point out when results differ.
 
