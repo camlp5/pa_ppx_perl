@@ -340,8 +340,9 @@ There are *five* kinds of modifiers, and different kinds are allowed for differe
 
 ** `pred`: return a boolean for whether or not the regexp successfully matched
 
-`raw` and `strings` are mutually-exclusive.  Also, `strings` can
-take parameters, which are explained below.
+`raw`, `strings`, and `pred are all mutually-exclusive.  `pred` and
+`exc` are mutually-exclusive.  Also, `strings` can take parameters,
+which are explained below.
 
 * pattern modifiers: allowed for `pattern` and `subst`
 
@@ -362,7 +363,7 @@ groups of the regexp.  So the result type of a regexp match should be
 With the `exc` modifier (which causes `Not_found` to be raised on
 match failure), this becomes `Re.substrings`.
 
-To get these result types, we use the modifier `group`.  But a
+To get these result types, we use the modifier `raw`.  But a
 `Re.substrings` is a complex object and we might want something more
 *transparent*.  A natural thing to want, is a tuple of all the
 capture-groups.  So let's consider a regexp: `(a)?(b)(c)?`.  This
