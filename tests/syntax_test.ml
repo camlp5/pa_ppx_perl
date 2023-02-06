@@ -24,6 +24,8 @@ let test_match ctxt =
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/ strings] |foo} ; ())
   ; assert_raises_exn_pattern "match extension.*at most one of.*strings.*raw"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/raw strings] |foo})
+  ; assert_raises_exn_pattern "match extension.*at most one of.*strings.*raw.*pred"
+      (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/raw pred] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/m] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%match "abc"/s] |foo} ; ())
   ; assert_raises_exn_pattern "match extension.*at most one of.*<<s>>.*<<m>>"
@@ -45,6 +47,8 @@ let test_split ctxt =
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"] |foo} ; ())
   ; assert_raises_exn_pattern "split extension.*at most one of.*strings.*raw"
       (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/raw strings] |foo})
+  ; assert_raises_exn_pattern "split extension.*forbidden option: pred"
+      (fun () -> PAPR.Implem.pa1 {foo| [%split "abc"/pred] |foo})
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/m] |foo} ; ())
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%split "abc"/s] |foo} ; ())
   ; assert_raises_exn_pattern "split extension.*at most one of.*<<s>>.*<<m>>"
@@ -62,12 +66,16 @@ let test_pattern ctxt =
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%pattern "abc" / e] |foo} ; ())
   ; assert_raises_exn_pattern "pattern extension: forbidden option: s"
       (fun () -> PAPR.Implem.pa1 {foo| [%pattern "abc"/s] |foo})
+  ; assert_raises_exn_pattern "pattern extension: forbidden option: pred"
+      (fun () -> PAPR.Implem.pa1 {foo| [%pattern "abc"/pred] |foo})
 
 let test_subst ctxt =
   ()
   ; assert_equal ()  (PAPR.Implem.pa1 {foo| [%subst "abc" / "def"] |foo} ; ())
   ; assert_raises_exn_pattern "subst extension: forbidden option: raw"
       (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /raw] |foo})
+  ; assert_raises_exn_pattern "subst extension: forbidden option: pred"
+      (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /pred] |foo})
   ; assert_raises_exn_pattern "subst extension: can specify at most one of <<s>>, <<m>>"
       (fun () -> PAPR.Implem.pa1 {foo| [%subst "abc" / "def" /s m] |foo})
 

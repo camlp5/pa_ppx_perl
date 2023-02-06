@@ -103,6 +103,7 @@ type t =
 | Raw
 | Strings
 | StringGroups of (int *bool) list
+| Pred
 | Exception
 | RePerl
 | Pcre
@@ -121,6 +122,7 @@ let pp_hum pps = function
        (n,true) -> Fmt.(pf pps "!%d" n)
      | (n,false) -> Fmt.(pf pps "%d" n) in
    Fmt.(pf pps "strings (%a)" (list ~sep:(const string ",") cgnum) l)
+| Pred -> Fmt.(pf pps "pred")
 | Exception -> Fmt.(pf pps "exc")
 | RePerl -> Fmt.(pf pps "re_perl")
 | Pcre -> Fmt.(pf pps "pcre")
@@ -155,6 +157,7 @@ let convert e =
        Strings::(StringGroups [(int_of_string n, true)])::(conv l)
 
     | <:expr< strings >>::l -> Strings::(conv l)
+    | <:expr< pred >>::l -> Pred::(conv l)
     | <:expr< exc >>::l -> Exception::(conv l)
     | <:expr< re_perl >>::l -> RePerl::(conv l)
     | <:expr< pcre >>::l -> Pcre::(conv l)
@@ -227,6 +230,8 @@ let rec re_build_result loc ~options ngroups use_exception =
        <:expr< Re.exec __re__ __subj__ >>
      else
        <:expr< Re.exec_opt __re__ __subj__ >>
+  else if List.mem Pred options then
+    <:expr< Re.execp __re__ __subj__ >>
   else
     let convf = re_build_string_converter loc ~options ngroups in
      if use_exception then
@@ -258,6 +263,8 @@ let rec pcre_build_result loc ~options ngroups use_exception =
        <:expr< Pcre.exec ~rex:__re__ __subj__ >>
      else
        <:expr< try Some (Pcre.exec ~rex:__re__ __subj__) with Not_found -> None >>
+  else if List.mem Pred options then
+    <:expr< Pcre.pmatch ~rex:__re__ __subj__ >>
   else
     let convf = pcre_build_string_converter loc ~options ngroups in
      if use_exception then
@@ -275,13 +282,16 @@ let validate_options modn loc options =
   if not (check_oneof ~l:[RePerl; Pcre] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<re>>, <<pcre>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  if not (check_oneof ~l:[Strings; Raw] options) then
-    Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<strings>>, <<raw>>: %a"
+  if not (check_oneof ~l:[Pred; Exception] options) then
+    Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<pred>>, <<exc>>: %a"
+           modn (list ~sep:(const string " ") Options.pp_hum) options) ;
+  if not (check_oneof ~l:[Strings; Raw; Pred] options) then
+    Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<strings>>, <<raw>>, <<pred>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Raw; Strings; RePerl; Pcre] options in
+  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Raw; Strings; Pred; RePerl; Pcre] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
@@ -341,9 +351,15 @@ let rec pcre_build_result loc ~options ngroups =
   else
     <:expr< Pcre.split ~rex:__re__ __subj__ >>
 
+let validate_options modn loc options =
+  let open Options in
+  Match.validate_options modn loc options ;
+  if List.mem Pred options then
+    Fmt.(raise_failwithf loc "%s extension: forbidden option: pred" modn)
+
 let build_regexp loc ~options restr =
   let open Options in
-  Match.validate_options "split" loc options ;
+  validate_options "split" loc options ;
   if List.mem RePerl options then
     let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
     let ngroups = Re.group_count re in
