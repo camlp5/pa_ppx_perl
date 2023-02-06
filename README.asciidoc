@@ -300,8 +300,8 @@ In an expression variables are already expressible, and capture groups
 are expressed as `$N$` (where `N` is an integer constant).
 
 A pattern that doesn't have any capture-groups has type `string`; a
-pattern that does have capture-groups has type `Re.substrings ->
-string` (or `Pcre.substrings -> string`) (since those capture-groups
+pattern that does have capture-groups has type `Re.substrings -> string`
+(or `Pcre.substrings -> string`) (since those capture-groups
 will have to be taken from some already-matched regexp, and a matched
 regexp produces a `Re.substrings` (or `Pcre.substrings`)).
 
