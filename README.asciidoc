@@ -309,14 +309,10 @@ regexp produces a `Re.substrings` (or `Pcre.substrings`)).
 
 The extensions all have common syntax aspects.  Extensions look like:
 
-* `[%match *regexp*]`
-* `[%match *regexp* / *modifiers*]`
-* `[%split *regexp*]`
-* `[%split *regexp* / *modifiers*]`
-* `[%pattern *pattern*]`
-* `[%pattern *pattern* / *modifiers*]`
-* `[%subst *regexp* / *pattern*]`
-* `[%subst *regexp* / *pattern* / *modifiers*]`
+* `[%match *regexp*]` or `[%match *regexp* / *modifiers*]`
+* `[%split *regexp*]` or `[%split *regexp* / *modifiers*]`
+* `[%pattern *pattern*]` or `[%pattern *pattern* / *modifiers*]`
+* `[%subst *regexp* / *pattern*]` or `[%subst *regexp* / *pattern* / *modifiers*]`
 
 There are *five* kinds of modifiers, and different kinds are allowed for different extensions:
 
@@ -338,11 +334,13 @@ There are *five* kinds of modifiers, and different kinds are allowed for differe
 ** `exc`: raise `Not_found` if the regexp does not match or mandatory
     capture-groups did not match.
 
-** `group`: return a `Re.substrings`
+** `raw`: return a `Re.substrings`
 
 ** `strings`: return a tuple of `string option` for each capture-group
 
-`group` and `strings` are mutually-exclusive.  Also, `strings` can
+** `pred`: return a boolean for whether or not the regexp successfully matched
+
+`raw` and `strings` are mutually-exclusive.  Also, `strings` can
 take parameters, which are explained below.
 
 * pattern modifiers: allowed for `pattern` and `subst`
@@ -353,7 +351,7 @@ take parameters, which are explained below.
 
 ** `g`: apply the substitution to every occurrence of the regexp, not just the first one
 
-=== The `group` and `strings` modifiers
+=== The `raw` and `strings` modifiers
 
 A regexp, when applied to some input string, can match, or fail to
 match.  The most primitive result it can produce is a `Re.substrings`,
