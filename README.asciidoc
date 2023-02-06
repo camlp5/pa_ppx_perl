@@ -185,7 +185,7 @@ In OCaml, we can write
 
 This is much more complicated, so let's walk thru it:
 
-* first, the delimiter, "abc" (the matched string), and then the (matched) capture-group "b".
+* first, the delimiter, "abc" (the matched string), with the (matched) capture-group "b".
 * then the text "d"
 * then the delimiter "ac" with an unmatched capture-group.
 * then the text "e"
@@ -199,7 +199,8 @@ NOTE the "strings" above. We'll come to this later on.
 
 === match-and-replace with a regexp/pattern (like Perl's `s/.../.../`)
 
-In Perl we can match-and-replace:
+In Perl we can match-and-replace a regexp with a *string substitution
+pattern* (expression patterns are right after):
 
 ```sh
 $ perl -MData::Dumper -e '$x = "abc\nabc"; \
@@ -233,9 +234,10 @@ or (to refer to local OCaml variables)
 - : string = "<<bc>>\nabc"
 ```
 
-In Perl instead of a *pattern* for the right-hand-side of the
-substition, we can use a Perl expression, in which special variables
-can be used to access the capture-groups:
+In Perl instead of a *string pattern* for the right-hand-side of the
+substition, we can use a *Perl expression* to compute the
+substitution, in which special variables are be used to access the
+capture-groups (NOTE: look for `e` in the modifiers):
 
 ```
 $lhs = "<<" ; $rhs = ">>" ;
@@ -253,7 +255,8 @@ let rhs = ">>" ;;
 
 NOTE the difference in the way that capture-groups are named in the
 pattern vs. in the expression.  This is due to the need to conform to
-Camlp5 antiquotation syntax.
+Camlp5 antiquotation syntax.  AND NOTE again the presence of `e` in
+the modifiers for "expression patterns".
 
 === patterns
 
@@ -288,7 +291,7 @@ and also an expression with antiquotations for capture-groups:
 ```
 
 NOTE that just as in Perl `s///`, to indicate that the pattern is an
-expression, we use the "modifier `e`.  Also note that the type for
+expression, we use the modifier `e`.  Also note that the type for
 `substrings` is different when using `re_perl` from when using `pcre`.
 
 In a string pattern, antiquotations are either `${varname}` or (for
@@ -297,9 +300,10 @@ In an expression variables are already expressible, and capture groups
 are expressed as `$N$` (where `N` is an integer constant).
 
 A pattern that doesn't have any capture-groups has type `string`; a
-pattern that does have capture-groups has type `Re.substrings -> string`
-(since those capture-groups will have to be taken from some
-already-matched regexp, and a matched regexp produces a `Re.substrings`).
+pattern that does have capture-groups has type `Re.substrings ->
+string` (or `Pcre.substrings -> string`) (since those capture-groups
+will have to be taken from some already-matched regexp, and a matched
+regexp produces a `Re.substrings` (or `Pcre.substrings`)).
 
 == The high-level syntax of these extensions
 
