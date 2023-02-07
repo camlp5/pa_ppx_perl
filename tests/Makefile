@@ -11,12 +11,13 @@ ML= \
 
 CMO := $(ML:.ml=.cmo)
 
-TESTS=pa_ppx_regexp_test.exe syntax_test.exe ya-wrap-ocamlfind join_meta
+TESTS=pa_ppx_regexp_test.exe pa_ppx_regexp_nostatic_test.exe syntax_test.exe ya-wrap-ocamlfind join_meta
 
 all: $(TESTS)
 
 test:: all
 	mkdir -p _build && ./pa_ppx_regexp_test.exe
+	mkdir -p _build && ./pa_ppx_regexp_nostatic_test.exe
 	mkdir -p _build && ./syntax_test.exe
 
 toplevel::
@@ -24,6 +25,17 @@ toplevel::
 
 pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
+
+pa_ppx_regexp_nostatic_test.exe: pa_ppx_regexp_nostatic_test.cmo
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
+
+pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml
+	echo "(** -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic *)\n" > $@.NEW
+	cat $< >> $@.NEW
+	mv $@.NEW $@
+
+nostatic_test.exe: nostatic_test.cmo
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
 
 syntax_test.exe: syntax_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES),camlp5.pa_op.link,camlp5.pr_o.link,str,pa_ppx.base.link,pa_ppx_regexp.link,pa_ppx.testutils -linkpkg -linkall -o $@ $<
@@ -35,7 +47,8 @@ join_meta: join_meta.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg -package $(PACKAGES) $< -o $@
 
 clean::
-	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind join_meta
+	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind join_meta *.NEW
+	rm -rf pa_ppx_regexp_nostatic_test.ml
 
 EXTERNAL := $(shell $(LAUNCH) $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
 $(CMO) $(TESTS): $(EXTERNAL)

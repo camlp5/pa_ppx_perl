@@ -1,2 +1,3 @@
 ya-wrap-ocamlfind
 join_meta
+pa_ppx_regexp_nostatic_test.ml
