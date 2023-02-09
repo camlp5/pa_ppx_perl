@@ -296,13 +296,24 @@ let validate_options modn loc options =
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
 
+let group_count loc options restr =
+  let open Options in
+  if List.mem Pcre options then
+    1 + Pcre.capturecount (Pcre.regexp (Scanf.unescaped restr))
+  else if List.mem RePerl options then
+    let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
+    1 + Pcre.capturecount (Pcre.regexp (Scanf.unescaped restr))
+(* NOTE WELL: once ocaml-re adds group_count, we can fix this code.
+    Re.group_count re
+ *)
+  else assert false
+
 let build_regexp loc ~options restr =
   let open Options in
   validate_options "match" loc options ;
   let use_exception = List.mem Exception options in
   if List.mem Pcre options then
-    let re = Pcre.regexp (Scanf.unescaped restr) in
-    let ngroups = 1 + Pcre.capturecount re in
+    let ngroups = group_count loc options restr in
     let compile_opt_expr = compile_opts loc options in
     let regexp_expr = <:expr< Pcre.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
     let regexp_expr = if !use_static then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
@@ -311,8 +322,7 @@ let build_regexp loc ~options restr =
             fun __subj__->
             $exp:result$ >>
   else if List.mem RePerl options then
-    let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
-    let ngroups = Re.group_count re in
+    let ngroups = group_count loc options restr in
     let compile_opt_expr = compile_opts loc options in
     let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
     let regexp_expr = if !use_static then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
@@ -363,8 +373,7 @@ let build_regexp loc ~options restr =
   let open Options in
   validate_options "split" loc options ;
   if List.mem RePerl options then
-    let re = Re.Perl.compile_pat (Scanf.unescaped restr) in
-    let ngroups = Re.group_count re in
+    let ngroups = Match.group_count loc options restr in
     if ngroups > 1 && not (List.mem Strings options || List.mem Raw options) then
       Fmt.(raise_failwithf loc "split extension: must specify one of <<strings>>, <<raw>> for regexp with capture groups: %a"
              (list Options.pp) options)
@@ -377,8 +386,7 @@ let build_regexp loc ~options restr =
               fun __subj__->
               $exp:result$ >>
   else if List.mem Pcre options then
-    let re = Pcre.regexp (Scanf.unescaped restr) in
-    let ngroups = 1 + Pcre.capturecount re in
+    let ngroups = Match.group_count loc options restr in
     if ngroups > 1 && not (List.mem Strings options || List.mem Raw options) then
       Fmt.(raise_failwithf loc "split extension: must specify one of <<strings>>, <<raw>> for regexp with capture groups: %a"
              (list Options.pp) options)

@@ -23,6 +23,11 @@ test: all mdx-test
 
 mdx-test:: README.asciidoc.TEST
 
+README.asciidoc.TEST: README.asciidoc.corrected README.asciidoc
+	perl -p -i -e 's,.*: added to search path,: added to search path,' README.asciidoc.corrected
+	perl -p -i -e 's,.*: loaded,: loaded,' README.asciidoc.corrected
+	diff -Bwiu $^ || true
+
 META: all
 	$(JOINMETA) -rewrite pa_ppx_regexp_runtime:pa_ppx_regexp.runtime \
 			-direct-include pa_regexp \
