@@ -1,15 +1,14 @@
 WD=$(shell pwd)
 TOP=..
-include $(TOP)/config/Makefile
-
-SYNTAX := camlp5o
+include $(TOP)/config/Makefile.sub
 
 PACKAGES := $(PACKAGES),pa_ppx_regexp,ounit2,pa_ppx.utils
 
 ML= \
 	pa_ppx_regexp_test.ml ya_wrap_ocamlfind.ml join_meta.ml syntax_test.ml standalone_test.ml
 
-CMO := $(ML:.ml=.cmo)
+ALLSRC=$(ML)
+ALLPACKAGES=$(PACKAGES)
 
 TESTS=pa_ppx_regexp_test.exe pa_ppx_regexp_nostatic_test.exe syntax_test.exe ya-wrap-ocamlfind join_meta standalone_test.exe
 
@@ -50,15 +49,3 @@ join_meta: join_meta.cmo
 clean::
 	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind join_meta *.NEW
 	rm -rf pa_ppx_regexp_nostatic_test.ml
-
-EXTERNAL := $(shell $(LAUNCH) $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
-$(CMO) $(TESTS): $(EXTERNAL)
-
-depend::
-	echo "$(CMO) $(TESTS): $(EXTERNAL)" > .depend.NEW
-	$(LAUNCH) $(OCAMLFIND) ocamldep $(DEBUG) $(WARNERR) -package $(PACKAGES) -syntax camlp5o \
-	$(ML) \
-	>> .depend.NEW
-	mv .depend.NEW .depend
-
--include .depend

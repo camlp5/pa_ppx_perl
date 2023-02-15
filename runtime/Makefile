@@ -3,21 +3,17 @@
 
 WD=$(shell pwd)
 TOP=..
-include $(TOP)/config/Makefile
+include $(TOP)/config/Makefile.sub
 
 DESTDIR=
-RM=rm
 
 PACKAGES := fmt,camlp5,pcre
 TARGET := pa_ppx_regexp_runtime.cma
 ML := runtime.ml
 TOOLSML = mk_meta.ml
 MLI := 
-CMO := $(ML:.ml=.cmo)
-CMI := $(ML:.ml=.cmi)
-CMX := $(ML:.ml=.cmx)
-CMT := $(ML:.ml=.cmt)
-CMTI := $(MLI:.mli=.cmti)
+ALLSRC=$(ML) $(MLI) $(TOOLSML)
+ALLPACKAGES=$(PACKAGES)
 
 OCAMLCFLAGS := $(OCAMLCFLAGS) -for-pack Pa_ppx_regexp
 
@@ -31,15 +27,6 @@ pa_ppx_regexp.cmo: $(CMO)
 
 pa_ppx_regexp.cmx: $(CMO:.cmo=.cmx)
 	$(OCAMLFIND) ocamlopt $(DEBUG) -pack -o pa_ppx_regexp.cmx $^
-
-META: mk_meta
-	./mk_meta > META
-
-mk_meta: mk_meta.cmo
-	$(OCAMLFIND) ocamlc -linkpkg -linkall -package $(PACKAGES) $< -o $@
-
-mk_meta.ml: mk_meta.ML
-	cppo $< > $@
 
 install:: META
 	mkdir -p $(DESTDIR)/lib
@@ -56,13 +43,3 @@ $(TARGET:.cma=.cmxa): pa_ppx_regexp.cmx
 
 $(TARGET): $(CMO)
 $(TARGET:.cma=.cmxa): $(CMO:.cmo=.cmx)
-
-EXTERNAL := $(shell $(OCAMLFIND) query -predicates byte -format '%m' $(PACKAGES) | grep local-install)
-$(CMO) $(CMI) $(CMX): $(EXTERNAL)
-
-depend::
-	echo "$(CMO) $(CMI) $(CMX): $(EXTERNAL)" > .depend.NEW
-	$(OCAMLFIND) ocamldep -package $(PACKAGES) -syntax camlp5o runtime.ml >> .depend.NEW \
-		&& mv .depend.NEW .depend
-
--include .depend
