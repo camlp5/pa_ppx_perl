@@ -19,10 +19,10 @@ version = "%s"
 description = "pa_ppx_regexp runtime support"
 
 # For linking
-archive(byte) = "pa_ppx_regexp_runtime.cma"
-archive(native) = "pa_ppx_regexp_runtime.cmxa"
+archive(byte) = "pa_ppx_regexp_runtime.cmo"
+archive(native) = "pa_ppx_regexp_runtime.cmx"
 
 # For the toploop:
-archive(byte,toploop) = "pa_ppx_regexp_runtime.cma"
+archive(byte,toploop) = "pa_ppx_regexp_runtime.cmo"
 
 |} version)

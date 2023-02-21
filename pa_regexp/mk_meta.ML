@@ -21,16 +21,16 @@ description = "pa_ppx_regexp: pa_ppx_regexp rewriter"
 # For linking
 package "link" (
 requires = "camlp5,fmt,re,pcre,pa_ppx.base.link,pa_ppx_static,camlp5.parser_quotations.link"
-archive(byte) = "pa_ppx_regexp.cma"
-archive(native) = "pa_ppx_regexp.cmxa"
+archive(byte) = "pa_ppx_regexp.cmo"
+archive(native) = "pa_ppx_regexp.cmx"
 )
 
 # For the toploop:
-archive(byte,toploop) = "pa_ppx_regexp.cma"
+archive(byte,toploop) = "pa_ppx_regexp.cmo"
 
   # For the preprocessor itself:
   requires(syntax,preprocessor) = "camlp5,fmt,re,pcre,pa_ppx.base,pa_ppx_static,camlp5.parser_quotations"
-  archive(syntax,preprocessor,-native) = "pa_ppx_regexp.cma"
-  archive(syntax,preprocessor,native) = "pa_ppx_regexp.cmxa"
+  archive(syntax,preprocessor,-native) = "pa_ppx_regexp.cmo"
+  archive(syntax,preprocessor,native) = "pa_ppx_regexp.cmx"
 
 |} version)
