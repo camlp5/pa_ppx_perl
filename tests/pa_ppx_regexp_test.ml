@@ -1,4 +1,4 @@
-(** -syntax camlp5o *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
 open OUnit2
 
 
@@ -199,16 +199,16 @@ let test_pcre_subst ctxt =
 
 let test_ocamlfind_bits ctxt =
   ()
-  ; assert_equal (Some " -syntax camlp5o ")
-      (snd ([%match {|^\(\*\*(.*?)\*\)|} / exc strings]
-       {|(** -syntax camlp5o *)
+  ; assert_equal ~printer:[%show: string option] (Some "-syntax camlp5o ")
+      (snd ([%match {|^\(\*\*pp (.*?)\*\)|} / exc strings]
+       {|(**pp -syntax camlp5o *)
 |}))
 
 let test_pcre_ocamlfind_bits ctxt =
   ()
-  ; assert_equal (Some " -syntax camlp5o ")
-      (snd ([%match {|^\(\*\*(.*?)\*\)|} / exc strings pcre]
-       {|(** -syntax camlp5o *)
+  ; assert_equal ~printer:[%show: string option] (Some "-syntax camlp5o ")
+      (snd ([%match {|^\(\*\*pp (.*?)\*\)|} / exc strings pcre]
+       {|(**pp -syntax camlp5o *)
 |}))
 
 let envsubst envlookup s =

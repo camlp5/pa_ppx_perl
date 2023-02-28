@@ -1,8 +1,16 @@
 #use "topfind.camlp5";;
 #camlp5o ;;
 #require "ounit2";;
-#require "pa_ppx_regexp";;
+#require "pa_ppx.testutils";;
+#require "str";;
+
 open OUnit2 ;;
+open Pa_ppx_testutils ;;
+open Papr_util ;;
+
+
+#require "pa_ppx_regexp";;
+#require "pa_ppx_regexp_runtime";;
 
 (*
 ;;; Local Variables: ***

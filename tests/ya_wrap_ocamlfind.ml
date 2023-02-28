@@ -1,4 +1,4 @@
-(** -syntax camlp5o *)
+(**pp -syntax camlp5o *)
 let rec split_args cmd = function
   | "--" :: files -> List.rev cmd, files
   | [file] -> List.rev cmd, [file]

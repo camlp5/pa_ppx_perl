@@ -1,4 +1,4 @@
-(** -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic *)
+(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic *)
 open OUnit2
 
 let _ = [%match "abc"]

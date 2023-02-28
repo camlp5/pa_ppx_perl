@@ -1,4 +1,4 @@
-(** -syntax camlp5o $(MIGRATE_CFLAGS) -package pa_ppx.import,pa_ppx_migrate *)
+(**pp -syntax camlp5o $(MIGRATE_CFLAGS) -package pa_ppx.import,pa_ppx_migrate *)
 (* camlp5o *)
 (* pa_string.ml,v *)
 (* Copyright (c) INRIA 2007-2017 *)
