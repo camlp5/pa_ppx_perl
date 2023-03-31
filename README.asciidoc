@@ -88,6 +88,14 @@ Additional Camlp5 directives:
 : added to search path
 : loaded
 # #require "pa_ppx_regexp" ;;
+# let exc_converter = function
+    Exit as exc ->
+    let s = Printexc.to_string exc in
+    Some (Location.error s)
+  | _ -> None
+val exc_converter : exn -> Location.report option = <fun>
+# Location.register_error_of_exn exc_converter ;;
+- : unit = ()
 ```
 
 
