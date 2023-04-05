@@ -30,7 +30,7 @@ pa_ppx_regexp_nostatic_test.exe: pa_ppx_regexp_nostatic_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
 
 pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml Makefile
-	echo "(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic -package pa_ppx.deriving_plugins.std *)\n" > $@.NEW
+	echo "(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic -package pa_ppx.deriving_plugins.std *)" > $@.NEW
 	cat $< >> $@.NEW
 	mv $@.NEW $@
 
