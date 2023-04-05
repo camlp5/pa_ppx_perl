@@ -12,6 +12,18 @@ open Papr_util ;;
 #require "pa_ppx_regexp";;
 #require "pa_ppx_regexp_runtime";;
 
+
+let exc_converter = function
+    Ploc.Exc (loc, exc) ->
+    let loc = Ast2pt.mkloc loc in
+    let s = Printexc.to_string exc in
+    Some (Location.error ~loc:loc s)
+  | Exit as exc ->
+    let s = Printexc.to_string exc in
+    Some (Location.error s)
+  | _ -> None
+;;
+
 (*
 ;;; Local Variables: ***
 ;;; mode:tuareg ***
