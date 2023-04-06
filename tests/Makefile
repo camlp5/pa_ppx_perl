@@ -2,7 +2,7 @@ WD=$(shell pwd)
 TOP=..
 include $(TOP)/config/Makefile.sub
 
-PACKAGES := $(PACKAGES),pa_ppx_regexp,ounit2,pa_ppx.utils
+PACKAGES := $(PACKAGES),pa_ppx_regexp,ounit,pa_ppx.utils
 
 ML= \
 	pa_ppx_regexp_test.ml ya_wrap_ocamlfind.ml join_meta.ml syntax_test.ml standalone_test.ml
@@ -27,7 +27,7 @@ pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 pa_ppx_regexp_nostatic_test.exe: pa_ppx_regexp_nostatic_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit,pa_ppx.utils,re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
 
 pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml Makefile
 	echo "(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic -package pa_ppx.deriving_plugins.std *)" > $@.NEW

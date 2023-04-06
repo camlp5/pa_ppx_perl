@@ -22,7 +22,7 @@ depends: [
   "pa_ppx_migrate"      { >= "0.10" }
   "pa_ppx_static" { >= "0.01" }
   "not-ocamlfind" { >= "0.10" }
-  "ounit2" {with-test}
+  "ounit" { >= "2.2.7" & with-test}
   "mdx" {with-test}
   "fmt"
   "pcre"
