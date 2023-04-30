@@ -29,6 +29,13 @@ let _migrate_list subrw0 __dt__ l =
     ; default_dispatchers = [
         {
           srcmod = MLast
+        ; dstmod = Ploc
+        ; types = [
+            vala
+          ]
+        }
+      ; {
+          srcmod = MLast
         ; dstmod = MLast
         ; types = [
             class_infos
@@ -59,7 +66,6 @@ let _migrate_list subrw0 __dt__ l =
           ; attributes_no_anti
           ; attributes
           ; type_var
-          ; vala
           ]
         }
       ]
