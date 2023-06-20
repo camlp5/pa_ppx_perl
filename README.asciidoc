@@ -427,3 +427,37 @@ regexp to match, we might want to dispense with the `option`:
 # [%match {|(a)?(b)(c)?|} / exc strings !2 pcre] ;;
 - : string -> string = <fun>
 ```
+
+== Examples of Errors
+
+=== A match regexp with an unrecognized modifier
+
+```ocaml
+# [%match {|(a)?|} / foo];;
+File "_none_", line 1, characters 19-22:
+Failure: extract_options: malformed option: <<(MLast.ExLid (<loc>,
+                                        (Pp_MLast.Ploc.VaVal "foo")))>>
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+```
+
+=== A match regexp with an unrecognized modifier
+
+```ocaml
+# [%match {|(a)?|} / foo];;
+File "_none_", line 1, characters 19-22:
+Failure: extract_options: malformed option: <<(MLast.ExLid (<loc>,
+                                        (Pp_MLast.Ploc.VaVal "foo")))>>
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+```
+
+=== A match regexp specifying more than one regexp syntax
+
+```ocaml
+# [%match {|(a)?|} / re_perl pcre];;
+File "_none_", line 1, characters 0-32:
+Failure: match extension: can specify at most one of <<re>>, <<pcre>>: re_perl pcre
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+```

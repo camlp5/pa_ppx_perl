@@ -17,11 +17,8 @@ all: sys
 sys:
 	set -e; for i in $(SYSDIRS); do cd $$i; $(MAKE) all; cd ..; done
 
-## NOTE WELL: not testing mdx-test b/c mdx is backlevel
-test: all
+test: all README.asciidoc.TEST
 	set -e; for i in $(TESTDIRS); do cd $$i; $(MAKE) test; cd ..; done
-
-mdx-test:: README.asciidoc.TEST
 
 META: all
 	$(JOINMETA) -rewrite pa_ppx_regexp_runtime:pa_ppx_regexp.runtime \
