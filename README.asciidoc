@@ -441,17 +441,6 @@ Line 1, characters 0-0:
 Error: Stdlib.Exit
 ```
 
-=== A match regexp with an unrecognized modifier
-
-```ocaml
-# [%match {|(a)?|} / foo];;
-File "_none_", line 1, characters 19-22:
-Failure: extract_options: malformed option: <<(MLast.ExLid (<loc>,
-                                        (Pp_MLast.Ploc.VaVal "foo")))>>
-Line 1, characters 0-0:
-Error: Stdlib.Exit
-```
-
 === A match regexp specifying more than one regexp syntax
 
 ```ocaml
