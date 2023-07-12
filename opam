@@ -1,4 +1,4 @@
-version: "0.01"
+version: "0.02"
 synopsis: "A Camlp5 PPX Rewriter for Perl Regexp Workalikes "
 description:
 """
@@ -23,7 +23,9 @@ depends: [
   "pa_ppx_static" { >= "0.01" }
   "not-ocamlfind" { >= "0.10" }
   "ounit" { >= "2.2.7" }
-  "mdx" {with-test}
+(*
+  "mdx" {>= "2.3.0" & with-test}
+*)
   "fmt"
   "pcre"
   "re"
