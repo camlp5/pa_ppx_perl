@@ -35,10 +35,10 @@ let test_match ctxt =
   ; assert_raises_exn_pattern "match extension.*forbidden.*: g"
       (fun () -> PAPR.Implem.pa1 {foo| [%match "abc"/g] |foo})
 
-let test_busted_regexps ctxt =
+let test_special_chars ctxt =
   ()
-  ; assert_raises_exn_pattern "Re__Perl.*Parse_error"
-      (fun () -> PAPR.Implem.pa1 {foo| [%match {|\n$|} /s] |foo})
+  ; assert_equal ()
+      (PAPR.Implem.pa1 {foo| [%match {|\n$|} /s] |foo} ; ())
 
 let test_split ctxt =
   ()
@@ -84,7 +84,7 @@ let suite = "Test pa_ppx_regexp syntax" >::: [
     ; "split"   >:: test_split
     ; "pattern"   >:: test_pattern
     ; "subst"   >:: test_subst
-    ; "busted regexps"   >:: test_busted_regexps
+    ; "special chars"   >:: test_special_chars
     ]
 
 let _ = 

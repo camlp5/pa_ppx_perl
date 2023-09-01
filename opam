@@ -28,6 +28,7 @@ depends: [
 *)
   "fmt"
   "pcre"
+  "pcre2"
   "re"
 ]
 build: [

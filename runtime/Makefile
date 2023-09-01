@@ -7,7 +7,7 @@ include $(TOP)/config/Makefile.sub
 
 DESTDIR=
 
-PACKAGES := fmt,camlp5,pcre
+PACKAGES := fmt,camlp5,pcre,pcre2
 TARGET_PACKAGE = pa_ppx_regexp_runtime
 
 ML = pa_ppx_regexp_runtime.ml
