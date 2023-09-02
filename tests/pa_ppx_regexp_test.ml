@@ -183,6 +183,7 @@ let test_pcre2_multiline ctxt =
 let test_simple_split ctxt =
   ()
   ; assert_equal ["bb"]  ([%split "a"] "bb")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings re_perl] "abxcd")
 
 let test_pcre_simple_split ctxt =
   ()
@@ -200,6 +201,7 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")]  ([%split "a(c)"/ strings] "acbacbac")
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"]  ([%split "a(c)"/ strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"]  ([%split "a(c)?"/ strings !0] "abacba")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings re_perl] "abxcd")
 
 let test_pcre_delim_split ctxt =
   ()
@@ -209,6 +211,7 @@ let test_pcre_delim_split ctxt =
   ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")] ([%split "a(c)"/pcre strings] "acbacbac")
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"] ([%split "a(c)?"/pcre strings !0] "abacba")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings pcre] "abxcd")
 
 let test_pcre2_delim_split ctxt =
   ()
@@ -218,6 +221,7 @@ let test_pcre2_delim_split ctxt =
   ; assert_equal [`Delim("ac",Some"c"); `Text "b";`Delim("ac",Some"c"); `Text "b"; `Delim("ac",Some "c")] ([%split "a(c)"/pcre2 strings] "acbacbac")
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre2 strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"] ([%split "a(c)?"/pcre2 strings !0] "abacba")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings pcre2] "abxcd")
 
 let test_string_pattern ctxt =
   ()
