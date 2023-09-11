@@ -1,4 +1,9 @@
 
+pa_ppx_regexp Version 0.02
+--------------------------
+
+* [11 Sep 2023] fix Makefiles, add pcre2 support
+
 pa_ppx_regexp Version 0.01
 --------------------------
 

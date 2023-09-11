@@ -20,9 +20,6 @@ test:: all
 	mkdir -p _build && ./syntax_test.exe
 	mkdir -p _build && ./standalone_test.exe
 
-toplevel::
-	$(LAUNCH) ocaml -nopromptcont
-
 pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
