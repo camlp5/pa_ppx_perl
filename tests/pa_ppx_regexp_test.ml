@@ -107,24 +107,27 @@ let test_pcre2_search ctxt =
   ; assert_equal None  ([%match "^abc"/strings pcre2] "zzzabc")
 
 let test_single ctxt =
+let printer = [%show: string option] in
   ()
-  ; assert_equal None ([%match ".+"] "\n\n")
-  ; assert_equal "\n\n" ([%match ".+" / s exc strings] "\n\n")
-  ; assert_equal None ([%match ".+" / m strings] "\n\n")
+  ; assert_equal ~printer  None ([%match ".+"] "\n\n")
+  ; assert_equal ~printer  None ([%match ".+" / m strings] "\n\n")
 
-  ; assert_equal None ([%match ".+"/ strings] "\n\n")
-  ; assert_equal (Some "\n\n") ([%match ".+"/s strings] "\n\n")
-  ; assert_equal None ([%match ".+"/m strings] "\n\n")
+  ; assert_equal ~printer  None ([%match ".+"/ strings] "\n\n")
+  ; assert_equal ~printer  (Some "\n\n") ([%match ".+"/s strings] "\n\n")
+  ; assert_equal ~printer  None ([%match ".+"/m strings] "\n\n")
 
-  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}] "abc\ndef")
-  ; assert_equal "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s] "abc\ndef")
-  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m] "abc\ndef")
+; let printer x = x in
+  ()
+  ; assert_equal ~printer  "\n\n" ([%match ".+" / s exc strings] "\n\n")
+  ; assert_equal ~printer  "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}] "abc\ndef")
+  ; assert_equal ~printer  "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s] "abc\ndef")
+  ; assert_equal ~printer  "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m] "abc\ndef")
 
-  ; assert_equal "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|}] "abc\ndef")
-  ; assert_equal "<<abc>><<>>\n<<def>>"  ([%subst ".*" / {|<<$0>>|} / g] "abc\ndef")
-  ; assert_equal "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g] "abc\ndef")
-  ; assert_equal "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g] "abca\ncaec")
-  ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s] "abca\ncaec")
+  ; assert_equal ~printer  "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|}] "abc\ndef")
+  ; assert_equal ~printer  "<<abc>><<>>\n<<def>>"  ([%subst ".*" / {|<<$0>>|} / g] "abc\ndef")
+  ; assert_equal ~printer  "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g] "abc\ndef")
+  ; assert_equal ~printer  "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g] "abca\ncaec")
+  ; assert_equal ~printer  "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s] "abca\ncaec")
 
 let test_pcre_single ctxt =
   ()
@@ -147,24 +150,27 @@ let test_pcre_single ctxt =
   ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s pcre] "abca\ncaec")
 
 let test_pcre2_single ctxt =
+let printer = [%show: string option] in
   ()
-  ; assert_equal None ([%match ".+"/pcre2] "\n\n")
-  ; assert_equal "\n\n" ([%match ".+" / s exc pcre2 strings] "\n\n")
-  ; assert_equal None ([%match ".+" / m pcre2 strings] "\n\n")
+  ; assert_equal ~printer None ([%match ".+"/pcre2] "\n\n")
+  ; assert_equal ~printer None ([%match ".+" / m pcre2 strings] "\n\n")
 
-  ; assert_equal None ([%match ".+"/ pcre2 strings] "\n\n")
-  ; assert_equal (Some "\n\n") ([%match ".+"/s pcre2 strings] "\n\n")
-  ; assert_equal None ([%match ".+"/m pcre2 strings] "\n\n")
+  ; assert_equal ~printer None ([%match ".+"/ pcre2 strings] "\n\n")
+  ; assert_equal ~printer (Some "\n\n") ([%match ".+"/s pcre2 strings] "\n\n")
+  ; assert_equal ~printer None ([%match ".+"/m pcre2 strings] "\n\n")
 
-  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|} / pcre2] "abc\ndef")
-  ; assert_equal "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s pcre2] "abc\ndef")
-  ; assert_equal "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m pcre2] "abc\ndef")
+; let printer x = x in
+  ()
+  ; assert_equal ~printer "\n\n" ([%match ".+" / s exc pcre2 strings] "\n\n")
+  ; assert_equal ~printer "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|} / pcre2] "abc\ndef")
+  ; assert_equal ~printer "<<abc\ndef>>" ([%subst ".+" / {|<<$0>>|}/s pcre2] "abc\ndef")
+  ; assert_equal ~printer "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m pcre2] "abc\ndef")
 
-  ; assert_equal "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|} /pcre2] "abc\ndef")
-  ; assert_equal "<<abc>><<>>\n<<def>><<>>"  ([%subst ".*" / {|<<$0>>|} / g pcre2] "abc\ndef")
-  ; assert_equal "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g pcre2] "abc\ndef")
-  ; assert_equal "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g pcre2] "abca\ncaec")
-  ; assert_equal "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s pcre2] "abca\ncaec")
+  ; assert_equal ~printer "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|} /pcre2] "abc\ndef")
+  ; assert_equal ~printer "<<abc>><<>>\n<<def>><<>>"  ([%subst ".*" / {|<<$0>>|} / g pcre2] "abc\ndef")
+  ; assert_equal ~printer "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g pcre2] "abc\ndef")
+  ; assert_equal ~printer "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g pcre2] "abca\ncaec")
+  ; assert_equal ~printer "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s pcre2] "abca\ncaec")
 
 let test_multiline ctxt =
   ()
