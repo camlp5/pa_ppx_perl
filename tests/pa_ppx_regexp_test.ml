@@ -124,7 +124,7 @@ let printer = [%show: string option] in
   ; assert_equal ~printer  "<<abc>>\ndef" ([%subst ".+" / {|<<$0>>|}/m] "abc\ndef")
 
   ; assert_equal ~printer  "<<abc>>\ndef"  ([%subst ".*" / {|<<$0>>|}] "abc\ndef")
-  ; assert_equal ~printer  "<<abc>><<>>\n<<def>>"  ([%subst ".*" / {|<<$0>>|} / g] "abc\ndef")
+  ; assert_equal ~printer  "<<abc>>\n<<def>>"  ([%subst ".*" / {|<<$0>>|} / g] "abc\ndef")
   ; assert_equal ~printer  "<<abc>>\n<<def>>" ([%subst ".+" / {|<<$0>>|} / g] "abc\ndef")
   ; assert_equal ~printer  "<<abc>>a\nc<<aec>>" ([%subst "a.c" / {|<<$0>>|} / g] "abca\ncaec")
   ; assert_equal ~printer  "<<abc>><<a\nc>><<aec>>" ([%subst "a.c" / {|<<$0>>|} / g s] "abca\ncaec")

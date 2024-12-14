@@ -1,4 +1,12 @@
 
+pa_ppx_regexp Version 0.03
+--------------------------
+
+* [13 Dec 2024] minor changes
+
+  - re 1.12.0 fixed a bug in matching; updated test to match
+  - fixed README.asciidoc (and enabled it b/c mdx seems up-to-date)
+
 pa_ppx_regexp Version 0.02
 --------------------------
 

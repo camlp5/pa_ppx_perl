@@ -1,4 +1,4 @@
-`pa_ppx_regexp`: version 0.01: a PPX Rewriter for Perl-ish regexp operations
+`pa_ppx_regexp`: version 0.03: a PPX Rewriter for Perl-ish regexp operations
 ============================================================================
 :toc:
 :toc-placement: preamble
@@ -446,7 +446,7 @@ Error: Stdlib.Exit
 ```ocaml
 # [%match {|(a)?|} / re_perl pcre];;
 File "_none_", line 1, characters 0-32:
-Failure: match extension: can specify at most one of <<re>>, <<pcre>>: re_perl pcre
+Failure: match extension: can specify at most one of <<re>>, <<pcre>>, <<pcre2>>: re_perl pcre
 Line 1, characters 0-0:
 Error: Stdlib.Exit
 ```
