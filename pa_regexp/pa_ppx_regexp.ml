@@ -424,7 +424,7 @@ let _result loc ~options ngroups =
     <:expr< List.map $exp:converter_fun_exp$ (Pa_ppx_regexp_runtime.pcre_full_split __re__ __subj__) >>
 
   else if List.mem Raw options then
-    <:expr< Pa_ppx_regexp_runtime.pcre_full_split __re__ __subj__ >>
+    <:expr< Pcre.full_split ~rex:__re__ __subj__ >>
   else
     <:expr< Pcre.split ~rex:__re__ __subj__ >>
 end
@@ -439,7 +439,7 @@ let _result loc ~options ngroups =
     <:expr< List.map $exp:converter_fun_exp$ (Pa_ppx_regexp_runtime.pcre2_full_split __re__ __subj__) >>
 
   else if List.mem Raw options then
-    <:expr< Pa_ppx_regexp_runtime.pcre2_full_split __re__ __subj__ >>
+    <:expr< Pcre2.full_split ~rex:__re__ __subj__ >>
   else
     <:expr< Pcre2.split ~rex:__re__ __subj__ >>
 end

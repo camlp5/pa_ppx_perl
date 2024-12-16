@@ -208,6 +208,7 @@ let test_delim_split ctxt =
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"]  ([%split "a(c)"/ strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"]  ([%split "a(c)?"/ strings !0] "abacba")
   ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings re_perl] "abxcd")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"; `Delim ("u", None, Some "u")] ([%split {|(x)|(u)|} / strings re_perl] "abxcdu")
 
 let test_pcre_delim_split ctxt =
   ()
@@ -218,6 +219,19 @@ let test_pcre_delim_split ctxt =
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"] ([%split "a(c)?"/pcre strings !0] "abacba")
   ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings pcre] "abxcd")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"; `Delim ("u", None, Some "u")] ([%split {|(x)|(u)|} / strings pcre] "abxcdu")
+
+let test_pcre_delim_split_raw ctxt =
+  let open Pcre in
+  ()
+  ; assert_equal [Delim "a"; Text "b"; Delim "a"; Text "b"] ([%split "a"/pcre raw] "ababa")
+  ; assert_equal [Delim "a"; Text "b"; Delim "a"; Delim "a"; Text "b"] ([%split "a"/pcre raw] "abaaba")
+  ; assert_equal [Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre raw] "abacba")
+  ; assert_equal [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre raw] "acbacbac")
+  ; assert_equal [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre raw] "acbacbac")
+  ; assert_equal [Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre raw] "abacba")
+  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"] ([%split {|(x)|(u)|} / raw pcre] "abxcd")
+  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"; Delim "u"; Group (1, ""); Group (2, "u")] ([%split {|(x)|(u)|} / raw pcre] "abxcdu")
 
 let test_pcre2_delim_split ctxt =
   ()
@@ -228,6 +242,19 @@ let test_pcre2_delim_split ctxt =
   ; assert_equal [`Delim"c"; `Text "b";`Delim"c"; `Text "b"; `Delim"c"] ([%split "a(c)"/pcre2 strings !1] "acbacbac")
   ; assert_equal [`Delim"a"; `Text "b";`Delim"ac"; `Text "b"; `Delim"a"] ([%split "a(c)?"/pcre2 strings !0] "abacba")
   ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"] ([%split {|(x)|(u)|} / strings pcre2] "abxcd")
+  ; assert_equal [`Text "ab"; `Delim ("x", Some "x", None); `Text "cd"; `Delim ("u", None, Some "u")] ([%split {|(x)|(u)|} / strings pcre2] "abxcdu")
+
+let test_pcre2_delim_split_raw ctxt =
+  let open Pcre2 in
+  ()
+  ; assert_equal [Delim "a"; Text "b"; Delim "a"; Text "b"] ([%split "a"/pcre2 raw] "ababa")
+  ; assert_equal [Delim "a"; Text "b"; Delim "a"; Delim "a"; Text "b"] ([%split "a"/pcre2 raw] "abaaba")
+  ; assert_equal [Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre2 raw] "abacba")
+  ; assert_equal [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre2 raw] "acbacbac")
+  ; assert_equal [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre2 raw] "acbacbac")
+  ; assert_equal [Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre2 raw] "abacba")
+  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"] ([%split {|(x)|(u)|} / raw pcre2] "abxcd")
+  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"; Delim "u"; NoGroup; Group (2, "u")] ([%split {|(x)|(u)|} / raw pcre2] "abxcdu")
 
 let test_string_pattern ctxt =
   ()
@@ -382,7 +409,8 @@ let suite = "Test pa_ppx_regexp" >::: [
     ; "pcre2 simple_split"   >:: test_pcre2_simple_split
     ; "delim_split"   >:: test_delim_split
     ; "pcre delim_split"   >:: test_pcre_delim_split
-    ; "pcre2 delim_split"   >:: test_pcre2_delim_split
+    ; "pcre delim_split raw"   >:: test_pcre_delim_split_raw
+    ; "pcre2 delim_split raw"   >:: test_pcre2_delim_split_raw
     ; "string_pattern"   >:: test_string_pattern
     ; "pcre string_pattern"   >:: test_pcre_string_pattern
     ; "pcre2 string_pattern"   >:: test_pcre2_string_pattern
