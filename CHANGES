@@ -1,4 +1,14 @@
 
+pa_ppx_regexp Version 0.04
+--------------------------
+
+* [25 Dec 2024] fix oversight in previous release (which is now withdrawn).
+
+  * needed to constrain versions of pcre, pcre2 to >= 8.0.1 since there are
+    bugfixes there, and we're updating tests to reflect those bugfixes
+
+  * AND THEN I forgot to update one of the tests.  UGH.
+
 pa_ppx_regexp Version 0.03
 --------------------------
 
