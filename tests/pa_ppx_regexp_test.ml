@@ -231,7 +231,7 @@ let test_pcre_delim_split_raw ctxt =
   ; assert_equal [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(c)"/pcre raw] "acbacbac")
   ; assert_equal [Delim "a"; NoGroup; Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "a"; NoGroup] ([%split "a(c)?"/pcre raw] "abacba")
   ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"] ([%split {|(x)|(u)|} / raw pcre] "abxcd")
-  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"; Delim "u"; Group (1, ""); Group (2, "u")] ([%split {|(x)|(u)|} / raw pcre] "abxcdu")
+  ; assert_equal [Text "ab"; Delim "x"; Group (1, "x"); NoGroup; Text "cd"; Delim "u"; NoGroup; Group (2, "u")] ([%split {|(x)|(u)|} / raw pcre] "abxcdu")
 
 let test_pcre2_delim_split ctxt =
   ()
