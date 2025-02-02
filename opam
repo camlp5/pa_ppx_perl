@@ -1,4 +1,4 @@
-version: "0.04"
+version: "0.05"
 synopsis: "A Camlp5 PPX Rewriter for Perl Regexp Workalikes "
 description:
 """
