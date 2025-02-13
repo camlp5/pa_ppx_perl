@@ -1,5 +1,7 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.testutils *)
 open OUnit2
+
+open Pa_ppx_testutils
 
 
 let test_simple_match ctxt =
