@@ -4,7 +4,7 @@
 :toc-placement: preamble
 
 OCaml has support for regular expressions using a number of different
-packages: `str`, `pcre`, and `re`.  These all present a functional
+packages: `str`, `pcre2`, and `re`.  These all present a functional
 interface with a number of different verbs and data-types, and any
 sort of nontrivial pattern-matching or match-and-replace involves
 significant code that can fairly be described as boilerplate.  This
@@ -22,7 +22,7 @@ other languages.
 This package is a first attempt to bring that level of transparency to
 OCaml.  This package supports:
 
-* Perl-syntax regexps via both `ocaml-re` and `pcre`.  The default is to use `ocaml-re`.
+* Perl-syntax regexps via both `ocaml-re` and `pcre2`.  The default is to use `ocaml-re`.
 * regexp matching (`[%match ....]`)
 * splitting with regexps (`[%split ....]`)
 * pattern-substitution with the result of regexp matching or OCaml string-typed variables (`[%pattern ...]`)
@@ -31,7 +31,7 @@ OCaml.  This package supports:
 All of these support transparent syntax for "modifiers" in the style
 of Perl's modifiers, and a few extra ones for OCaml specifically.
 
-NOTE WELL that sometimes `ocaml-re` 's Perl mode differs from `pcre`;
+NOTE WELL that sometimes `ocaml-re` 's Perl mode differs from `pcre2`;
 that is why both are supported.  In the examples, I'll show usage of
 both, and will point out when results differ.
 
@@ -124,13 +124,13 @@ Some ("#!/foo/bar/buzz", Some "/foo/bar", Some "buzz")
 # [%match {|^#!(\S+)/([^/\s]+)|}/re_perl] "#!/foo/bar/buzz  abc  def";;
 - : (string * string option * string option) option =
 Some ("#!/foo/bar/buzz", Some "/foo/bar", Some "buzz")
-# [%match {|^#!(\S+)/([^/\s]+)|}/pcre] "#!/foo/bar/buzz  abc  def";;
+# [%match {|^#!(\S+)/([^/\s]+)|}/pcre2] "#!/foo/bar/buzz  abc  def";;
 - : (string * string option * string option) option =
 Some ("#!/foo/bar/buzz", Some "/foo/bar", Some "buzz")
 ```
 
 NOTE that the default is `re_perl`.  Hereinafter examples will all be
-with both `re_perl` and `pcre`.
+with both `re_perl` and `pcre2`.
 
 === Splitting a string with a regexp (like Perl's `split(/.../,...)`)
 
@@ -152,11 +152,11 @@ In OCaml we can write:
 ```ocaml
 # [%split {|ab?c|}/re_perl] "abcdaceabc" ;;
 - : string list = ["d"; "e"]
-# [%split {|ab?c|}/pcre] "abcdaceabc" ;;
+# [%split {|ab?c|}/pcre2] "abcdaceabc" ;;
 - : string list = [""; "d"; "e"]
 ```
 
-NOTE WELL: there's a discrepancy here between `pcre` and `ocaml-re`.
+NOTE WELL: there's a discrepancy here between `pcre2` and `ocaml-re`.
 
 In Perl we can also use capture-groups with a split:
 
@@ -180,7 +180,7 @@ In OCaml, we can write
 - : [> `Delim of string * string option | `Text of string ] list =
 [`Delim ("abc", Some "b"); `Text "d"; `Delim ("ac", None); `Text "e";
  `Delim ("abc", Some "b")]
-# [%split {|a(b)?c|} / strings pcre] "abcdaceabc" ;;
+# [%split {|a(b)?c|} / strings pcre2] "abcdaceabc" ;;
 - : [> `Delim of string * string option | `Text of string ] list =
 [`Delim ("abc", Some "b"); `Text "d"; `Delim ("ac", None); `Text "e";
  `Delim ("abc", Some "b")]
@@ -226,14 +226,14 @@ In OCaml we can do the same:
 ```ocaml
 # [%subst {|a(bc)|} / {|<<$1>>|}/re_perl] "abc\nabc" ;;
 - : string = "<<bc>>\nabc"
-# [%subst {|a(bc)|} / {|<<$1>>|}/pcre] "abc\nabc" ;;
+# [%subst {|a(bc)|} / {|<<$1>>|}/pcre2] "abc\nabc" ;;
 - : string = "<<bc>>\nabc"
 ```
 or (to refer to local OCaml variables)
 ```ocaml
 # let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}/re_perl] "abc\nabc" ;;
 - : string = "<<bc>>\nabc"
-# let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}/pcre] "abc\nabc" ;;
+# let lhs = "<<" and rhs = ">>" in [%subst {|a(bc)|} / {|${lhs}$1${rhs}|}/pcre2] "abc\nabc" ;;
 - : string = "<<bc>>\nabc"
 ```
 
@@ -253,7 +253,7 @@ and likewise in OCaml:
 let lhs = "<<" ;;
 let rhs = ">>" ;;
 [%subst {|a(bc)|} / {|lhs ^ $1$ ^ rhs|} / e re_perl] "abc\nabc"
-[%subst {|a(bc)|} / {|lhs ^ $1$ ^ rhs|} / e pcre] "abc\nabc"
+[%subst {|a(bc)|} / {|lhs ^ $1$ ^ rhs|} / e pcre2] "abc\nabc"
 ```
 
 NOTE the difference in the way that capture-groups are named in the
@@ -275,27 +275,27 @@ First there are strings with antiquotations for variables and capture-groups:
 ```ocaml
 # [%pattern {|<<$1>>|}/re_perl] ;;
 - : Re.substrings -> string = <fun>
-# [%pattern {|<<$1>>|}/pcre] ;;
-- : Pcre.substrings -> string = <fun>
+# [%pattern {|<<$1>>|}/pcre2] ;;
+- : Pcre2.substrings -> string = <fun>
 ```
 or
 ```ocaml
 # fun lhs rhs -> [%pattern {|${lhs}$1${rhs}|}/re_perl] ;;
 - : string -> string -> Re.substrings -> string = <fun>
-# fun lhs rhs -> [%pattern {|${lhs}$1${rhs}|}/pcre] ;;
-- : string -> string -> Pcre.substrings -> string = <fun>
+# fun lhs rhs -> [%pattern {|${lhs}$1${rhs}|}/pcre2] ;;
+- : string -> string -> Pcre2.substrings -> string = <fun>
 ```
 and also an expression with antiquotations for capture-groups:
 ```ocaml
 # fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e re_perl] ;;
 - : string -> string -> Re.substrings -> string = <fun>
-# fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e pcre] ;;
-- : string -> string -> Pcre.substrings -> string = <fun>
+# fun lhs rhs -> [%pattern {|lhs ^ $1$ ^ rhs|} / e pcre2] ;;
+- : string -> string -> Pcre2.substrings -> string = <fun>
 ```
 
 NOTE that just as in Perl `s///`, to indicate that the pattern is an
 expression, we use the modifier `e`.  Also note that the type for
-`substrings` is different when using `re_perl` from when using `pcre`.
+`substrings` is different when using `re_perl` from when using `pcre2`.
 
 In a string pattern, antiquotations are either `${varname}` or (for
 capture groups) `$N` (or `${N}`) (where `N` is an integer constant).
@@ -304,9 +304,9 @@ are expressed as `$N$` (where `N` is an integer constant).
 
 A pattern that doesn't have any capture-groups has type `string`; a
 pattern that does have capture-groups has type `Re.substrings -> string`
-(or `Pcre.substrings -> string`) (since those capture-groups
+(or `Pcre2.substrings -> string`) (since those capture-groups
 will have to be taken from some already-matched regexp, and a matched
-regexp produces a `Re.substrings` (or `Pcre.substrings`)).
+regexp produces a `Re.substrings` (or `Pcre2.substrings`)).
 
 == The high-level syntax of these extensions
 
@@ -322,7 +322,7 @@ There are *five* kinds of modifiers, and different kinds are allowed for differe
 * choice of which regexp backend: allowed for all extensions, and default `re_perl`
 
 ** `re_perl`: the `ocaml-re` backend, using `Re.Perl`
-** `pcre`: the `pcre` backend
+** `pcre2`: the `pcre2` backend
 
 * regexp compile-time modifiers: allowed for `match`, `split`, `subst`
 
@@ -385,7 +385,7 @@ matches, but let's ignore that for now.  The type of the regexp is
 # [%match {|(a)?(b)(c)?|}/re_perl] ;;
 - : string -> (string * string option * string option * string option) option
 = <fun>
-# [%match {|(a)?(b)(c)?|}/pcre] ;;
+# [%match {|(a)?(b)(c)?|}/pcre2] ;;
 - : string -> (string * string option * string option * string option) option
 = <fun>
 ```
@@ -400,7 +400,7 @@ match, the `exc` modifier will do that for us:
 ```ocaml
 # [%match {|(a)?(b)(c)?|} / exc re_perl] ;;
 - : string -> string * string option * string option * string option = <fun>
-# [%match {|(a)?(b)(c)?|} / exc pcre] ;;
+# [%match {|(a)?(b)(c)?|} / exc pcre2] ;;
 - : string -> string * string option * string option * string option = <fun>
 ```
 
@@ -409,7 +409,7 @@ Perhaps we'd like only the second capture group:
 ```ocaml
 # [%match {|(a)?(b)(c)?|} / exc strings 2 re_perl] ;;
 - : string -> string option = <fun>
-# [%match {|(a)?(b)(c)?|} / exc strings 2 pcre] ;;
+# [%match {|(a)?(b)(c)?|} / exc strings 2 pcre2] ;;
 - : string -> string option = <fun>
 ```
 
@@ -419,7 +419,7 @@ regexp to match, we might want to dispense with the `option`:
 ```ocaml
 # [%match {|(a)?(b)(c)?|} / exc strings !2 re_perl] ;;
 - : string -> string = <fun>
-# [%match {|(a)?(b)(c)?|} / exc strings !2 pcre] ;;
+# [%match {|(a)?(b)(c)?|} / exc strings !2 pcre2] ;;
 - : string -> string = <fun>
 ```
 
@@ -439,9 +439,9 @@ Error: Stdlib.Exit
 === A match regexp specifying more than one regexp syntax
 
 ```ocaml
-# [%match {|(a)?|} / re_perl pcre];;
-File "_none_", line 1, characters 0-32:
-Failure: match extension: can specify at most one of <<re>>, <<pcre>>, <<pcre2>>: re_perl pcre
+# [%match {|(a)?|} / re_perl pcre2];;
+File "_none_", line 1, characters 0-33:
+Failure: match extension: can specify at most one of <<re>>, <<pcre2>>: re_perl pcre2
 Line 1, characters 0-0:
 Error: Stdlib.Exit
 ```

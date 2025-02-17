@@ -24,7 +24,7 @@ pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
 
 pa_ppx_regexp_nostatic_test.exe: pa_ppx_regexp_nostatic_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pcre,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
 
 pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml Makefile
 	echo "(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic -package pa_ppx.deriving_plugins.std *)" > $@.NEW
@@ -32,7 +32,7 @@ pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml Makefile
 	mv $@.NEW $@
 
 standalone_test.exe: standalone_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package re,pcre -linkpkg -linkall -o $@ $<
+	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package re,pcre2 -linkpkg -linkall -o $@ $<
 
 syntax_test.exe: syntax_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES),camlp5.pa_op.link,camlp5.pr_o.link,str,pa_ppx.base.link,pa_ppx_regexp.link,pa_ppx.testutils -linkpkg -linkall -o $@ $<

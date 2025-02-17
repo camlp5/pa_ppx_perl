@@ -2,6 +2,9 @@
 pa_ppx_regexp Version 0.05
 --------------------------
 
+* [16 Feb 2025] Debian testing (in opam-ci) finally removed
+  "libpcre3-dev", so time to remove all references to `pcre`.
+
 * [01 Feb 2025] sync config/Makefiles across pa_ppx* packages
 
 pa_ppx_regexp Version 0.04
