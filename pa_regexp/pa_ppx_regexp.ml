@@ -234,6 +234,150 @@ let wrap_loc loc f arg =
         raise (Ploc.Exc(loc, e))
 
 
+module Pattern = struct
+
+(* String parts are:
+
+   Either:
+
+   * "$$"
+
+   * "$" <digit>+
+
+   * "$" "{" <digit>+ "}"
+
+   * "$" "{" <expr> "}"
+ *)
+
+let string_parts_pattern = Re.Perl.compile_pat {|\$\$|\$([0-9]+)|\$\{([0-9]+)\}|\$\{([^}]+)\}|}
+
+let add_loc_to_parts loc parts =
+  let rec addrec loc = function
+      [] -> []
+    | (`Text s as p)::t ->
+       let slen = String.length s in
+       let loclen = Ploc.((last_pos loc) - (first_pos loc)) in
+       let subloc = Ploc.(sub loc 0 slen) in
+       let restloc = Ploc.sub loc slen (loclen - slen) in
+       (subloc, p)::(addrec restloc t)
+    | (`Delim g as p)::t ->
+       let s = match Re.Group.get_opt g 0 with
+           None -> raise_failwithf loc "Pattern.add_loc_to_parts: Internal error: group 0 was None"
+         | Some s -> s
+       in
+       let slen = String.length s in
+       let loclen = Ploc.((last_pos loc) - (first_pos loc)) in
+       let subloc = Ploc.(sub loc 0 slen) in
+       let restloc = Ploc.sub loc slen (loclen - slen) in
+       (subloc, p)::(addrec restloc t)
+  in
+  addrec loc parts
+
+
+let extract_parts loc patstr =
+  let open Options in
+  let parts = Re.split_full string_parts_pattern patstr in
+  let parts = parts
+              |> List.filter_map (function
+                       `Text "" -> None
+                     | x -> Some x) in
+  let loc_parts = add_loc_to_parts loc parts in
+  loc_parts |> List.map (function
+                     (loc, `Text s) -> (loc, `Text s)
+                   | (loc, `Delim g) ->
+                      match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
+                        (Some "$$", _, _, _) -> (loc, `Text "$")
+                      | (_, Some nstr, _, _)
+                      | (_, _, Some nstr, _) ->
+                         (loc, `CGroup (int_of_string nstr))
+                      | (_, _, _, Some exps) ->
+                         (loc, `Expr (parse_expr loc exps))
+                      | _ -> Fmt.(raise_failwithf loc "pa_ppx_regexp: unrecognized pattern: <<%a>>" Dump.string patstr)
+                 )
+
+let build_string loc ~cgroups ~options patstr =
+  let open Options in
+  let has_cgroups = ref (match cgroups with None -> false | Some _ -> true) in
+  let ngroups = (match cgroups with None -> 0 | Some n -> n) in
+  let cgroup_extract_expr n =
+    let nstr = string_of_int n in
+    if List.mem RePerl options then
+      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+    else if List.mem Pcre2 options then
+      <:expr< match Pcre2.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>
+    else Fmt.(raise_failwithf loc "Pattern.build_string: neither <<re>> nor <<pcre2>> were found in options: %a\n"
+            (list ~sep:(const string " ") Options.pp_hum) options) in
+  let loc_parts = extract_parts loc patstr in
+  let parts_exps =
+    loc_parts |> List.map (function
+                       (loc, `Text s) ->
+                        let s = String.escaped s in
+                        <:expr< $str:s$ >>
+                     | (loc, `CGroup n) ->
+                        if ngroups < 0 then
+                          Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed")
+                        else if ngroups > 0 && n >= ngroups then
+                          Fmt.(raise_failwithf loc "Pattern(string): capture-group reference %d not in range [0..%d)" n ngroups) ;
+                        has_cgroups := true ;
+                        cgroup_extract_expr n
+                     | (loc, `Expr e) -> e
+                     | _ -> Fmt.(raise_failwithf loc "pa_ppx_regexp: unrecognized pattern: <<%a>>" Dump.string patstr)
+                   ) in
+  let listexpr = convert_up_list_expr loc parts_exps in
+  if !has_cgroups then
+    <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
+  else
+    <:expr< String.concat "" $exp:listexpr$ >>
+
+let build_expr loc ~cgroups ~options (patloc, patstr) =
+  let open Options in
+  let has_cgroups = ref (match cgroups with None -> false | Some _ -> true) in
+  let ngroups = (match cgroups with None -> 0 | Some n -> n) in
+  let cgroup_extract_expr nstr =
+    if List.mem RePerl options then
+      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>
+    else if List.mem Pcre2 options then
+      <:expr< match Pcre2.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>
+    else Fmt.(raise_failwithf loc "Pattern.build_expr: neither <<re>> nor <<pcre2>> were found in options: %a\n"
+            (list ~sep:(const string " ") Options.pp_hum) options) in
+  let e = parse_antiquot_expr patloc patstr in
+  let dt = make_dt () in
+  let old_migrate_expr = dt.migrate_expr in
+  let migrate_expr dt = function
+      ExXtr(loc, antiquot, _) ->
+       let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
+       if ngroups < 0 then
+         Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed" nstr ngroups)
+       else if ngroups > 0 && int_of_string nstr >= ngroups then
+         Fmt.(raise_failwithf loc "Pattern(expr): capture-group reference %s not in range [0..%d)" nstr ngroups) ;
+       has_cgroups := true ;
+       cgroup_extract_expr nstr
+    | e -> old_migrate_expr dt e in
+  let dt = { dt with migrate_expr = migrate_expr } in
+  let e = dt.migrate_expr dt e in
+  if !has_cgroups then
+    <:expr< fun __g__ -> $exp:e$ >>
+  else
+    e
+
+let validate_options modn loc options =
+  let open Options in
+  let fl = forbidden_options  ~l:[Expr; RePerl; Pcre2] options in
+  if fl <> [] then
+    Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
+  ()
+
+let build_pattern loc ~cgroups ~options (patloc, patstr) =
+  let open Options in
+  validate_options "pattern" loc options ;
+  let patstr = Scanf.unescaped patstr in
+  if List.mem Expr options then
+    build_expr patloc ~cgroups ~options (patloc, patstr)
+  else
+    build_string patloc ~cgroups ~options patstr
+
+end
+
 module RE = struct
 open Options
 let build loc ~options (reloc, restr) =
@@ -445,133 +589,6 @@ let build_regexp loc ~options (reloc, restr) =
               $exp:result$ >>
   else Fmt.(raise_failwithf loc "split extension: neither <<re>> nor <<pcre2>> were found in options: %a\n"
               (list ~sep:(const string " ") Options.pp_hum) options)
-end
-
-module Pattern = struct
-
-(* String parts are:
-
-   Either:
-
-   * "$$"
-   
-   * "$" <digit>+
-
-   * "$" "{" <digit>+ "}"
-
-   * "$" "{" <expr> "}"
- *)
-
-let string_parts_pattern = Re.Perl.compile_pat {|\$\$|\$([0-9]+)|\$\{([0-9]+)\}|\$\{([^}]+)\}|}
-
-let add_loc_to_parts loc parts =
-  let rec addrec loc = function
-      [] -> []
-    | (`Text s as p)::t ->
-       let slen = String.length s in
-       let loclen = Ploc.((last_pos loc) - (first_pos loc)) in
-       let subloc = Ploc.(sub loc 0 slen) in
-       let restloc = Ploc.sub loc slen (loclen - slen) in
-       (subloc, p)::(addrec restloc t)
-    | (`Delim g as p)::t ->
-       let s = match Re.Group.get_opt g 0 with
-           None -> raise_failwithf loc "Pattern.add_loc_to_parts: Internal error: group 0 was None"
-         | Some s -> s
-       in
-       let slen = String.length s in
-       let loclen = Ploc.((last_pos loc) - (first_pos loc)) in
-       let subloc = Ploc.(sub loc 0 slen) in
-       let restloc = Ploc.sub loc slen (loclen - slen) in
-       (subloc, p)::(addrec restloc t)
-  in
-  addrec loc parts
-
-let build_string loc ~cgroups ~options patstr =
-  let open Options in
-  let has_cgroups = ref (match cgroups with None -> false | Some _ -> true) in
-  let ngroups = (match cgroups with None -> 0 | Some n -> n) in
-  let cgroup_extract_expr nstr =
-    if List.mem RePerl options then
-      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>      
-    else if List.mem Pcre2 options then
-      <:expr< match Pcre2.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>      
-    else Fmt.(raise_failwithf loc "Pattern.build_string: neither <<re>> nor <<pcre2>> were found in options: %a\n"
-            (list ~sep:(const string " ") Options.pp_hum) options) in
-  let parts = Re.split_full string_parts_pattern patstr in
-  let loc_parts = add_loc_to_parts loc parts in
-  let parts_exps =
-    loc_parts |> List.map (function
-                   (loc, `Text s) ->
-                    let s = String.escaped s in
-                    <:expr< $str:s$ >>
-                 | (loc, `Delim g) ->
-                    match (Re.Group.get_opt g 0, Re.Group.get_opt g 1, Re.Group.get_opt g 2, Re.Group.get_opt g 3) with
-                      (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
-                    | (_, Some nstr, _, _)
-                    | (_, _, Some nstr, _) ->
-                       if ngroups < 0 then 
-                         Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed" nstr ngroups)
-                       else if ngroups > 0 && int_of_string nstr >= ngroups then
-                         Fmt.(raise_failwithf loc "Pattern(string): capture-group reference %s not in range [0..%d)" nstr ngroups) ;
-                       has_cgroups := true ;
-                       cgroup_extract_expr nstr
-                    | (_, _, _, Some exps) ->
-                       parse_expr loc exps
-                    | _ -> Fmt.(raise_failwithf loc "pa_ppx_regexp: unrecognized pattern: <<%a>>" Dump.string patstr)
-               ) in
-  let listexpr = convert_up_list_expr loc parts_exps in
-  if !has_cgroups then
-    <:expr< fun __g__ -> String.concat "" $exp:listexpr$ >>
-  else
-    <:expr< String.concat "" $exp:listexpr$ >>
-
-let build_expr loc ~cgroups ~options (patloc, patstr) =
-  let open Options in
-  let has_cgroups = ref (match cgroups with None -> false | Some _ -> true) in
-  let ngroups = (match cgroups with None -> 0 | Some n -> n) in
-  let cgroup_extract_expr nstr =
-    if List.mem RePerl options then
-      <:expr< match Re.Group.get_opt __g__ $int:nstr$ with None -> "" | Some s -> s >>      
-    else if List.mem Pcre2 options then
-      <:expr< match Pcre2.get_substring __g__ $int:nstr$ with exception Not_found -> "" | s -> s >>      
-    else Fmt.(raise_failwithf loc "Pattern.build_expr: neither <<re>> nor <<pcre2>> were found in options: %a\n"
-            (list ~sep:(const string " ") Options.pp_hum) options) in
-  let e = parse_antiquot_expr patloc patstr in
-  let dt = make_dt () in
-  let old_migrate_expr = dt.migrate_expr in
-  let migrate_expr dt = function
-      ExXtr(loc, antiquot, _) ->
-       let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
-       if ngroups < 0 then 
-         Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed" nstr ngroups)
-       else if ngroups > 0 && int_of_string nstr >= ngroups then
-         Fmt.(raise_failwithf loc "Pattern(expr): capture-group reference %s not in range [0..%d)" nstr ngroups) ;
-       has_cgroups := true ;
-       cgroup_extract_expr nstr
-    | e -> old_migrate_expr dt e in
-  let dt = { dt with migrate_expr = migrate_expr } in
-  let e = dt.migrate_expr dt e in
-  if !has_cgroups then
-    <:expr< fun __g__ -> $exp:e$ >>
-  else
-    e
-
-let validate_options modn loc options =
-  let open Options in
-  let fl = forbidden_options  ~l:[Expr; RePerl; Pcre2] options in
-  if fl <> [] then
-    Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
-  ()
-
-let build_pattern loc ~cgroups ~options (patloc, patstr) =
-  let open Options in
-  validate_options "pattern" loc options ;
-  let patstr = Scanf.unescaped patstr in
-  if List.mem Expr options then
-    build_expr patloc ~cgroups ~options (patloc, patstr)
-  else
-    build_string patloc ~cgroups ~options patstr
-
 end
 
 module Subst = struct
