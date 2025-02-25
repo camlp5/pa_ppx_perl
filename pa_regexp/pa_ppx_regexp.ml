@@ -379,38 +379,38 @@ let build_pattern loc ~cgroups ~options (patloc, patstr) =
 let build_dynamic_regexp_string loc ~options (patloc, patstr) =
   let open Options in
   validate_options "pattern" loc options ;
-  let quote_expr =
-    if List.mem Pcre2 options then
-      <:expr< Pcre.quote >>
-  else if List.mem RePerl options then
-      Fmt.(raise_failwithf loc "Dynamic Regexp: cannot do it with re_perl (no support for quoting")
-  else assert false in
-
   let unesc_patstr = Scanf.unescaped patstr in
   let loc_parts = extract_parts loc unesc_patstr in
   match loc_parts with
     [_, `Text _] -> (<:expr< $str:patstr$ >>, unesc_patstr)
   | _ ->
-  let parts_exps =
-    loc_parts |> List.map (function
-                       (loc, `Text s) ->
-                        let s = String.escaped s in
-                        <:expr< $quote_expr$ $str:s$ >>
-                     | (loc, `CGroup n) ->
-                          Fmt.(raise_failwithf loc "Dynamic Regexp: capture-groups not allowed")
+     let quote_expr =
+       if List.mem Pcre2 options then
+         <:expr< Pcre2.quote >>
+       else if List.mem RePerl options then
+         Fmt.(raise_failwithf loc "Dynamic Regexp: cannot do it with re_perl (no support for quoting)")
+       else assert false in
+     
+     let parts_exps =
+       loc_parts |> List.map (function
+                          (loc, `Text s) ->
+                           let s = String.escaped s in
+                           <:expr< $str:s$ >>
+                        | (loc, `CGroup n) ->
+                           Fmt.(raise_failwithf loc "Dynamic Regexp: capture-groups not allowed")
 
-                     | (loc, `Expr e) -> <:expr< $quote_expr$ $e$ >>
-                   ) in
-  let simple_version =
-    loc_parts
-    |> List.map (function
-             (loc, `Text s) -> s
-           | (loc, `CGroup n) -> assert false
-           | (loc, `Expr e) -> ""
-         )
-    |> String.concat "" in
-  let listexpr = convert_up_list_expr loc parts_exps in
-  (<:expr< String.concat "" $exp:listexpr$ >>, simple_version)
+                        | (loc, `Expr e) -> <:expr< $quote_expr$ $e$ >>
+                      ) in
+     let simple_version =
+       loc_parts
+       |> List.map (function
+                (loc, `Text s) -> s
+              | (loc, `CGroup n) -> assert false
+              | (loc, `Expr e) -> ""
+            )
+       |> String.concat "" in
+     let listexpr = convert_up_list_expr loc parts_exps in
+     (<:expr< String.concat "" $exp:listexpr$ >>, simple_version)
 
 end
 
@@ -443,8 +443,14 @@ let _build loc ~options (reloc, restrexp) =
 
 let build loc ~options (reloc, restr) =
   let unesc_restr = Scanf.unescaped restr in
-  let restrexp = <:expr< $str:restr$ >> in
-  (group_count loc options (reloc, unesc_restr),
+  let use_dynamic = List.mem Dynamic options in
+  let (restrexp, unesc_restr) =
+    if not use_dynamic then (<:expr< $str:restr$ >>, unesc_restr)
+    else
+      let options = Std.intersect options [Pcre2; RePerl] in
+      Pattern.build_dynamic_regexp_string loc ~options (reloc, restr) in
+  let ngroups = group_count loc options (reloc, unesc_restr) in
+  (ngroups,
    _build loc ~options (reloc, restrexp))
 
 end

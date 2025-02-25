@@ -264,6 +264,13 @@ let test_pcre2_envsubst_via_replace ctxt =
   let f = function "A" -> "res1" | "B" -> "res2" in
   assert_equal "...res1...res2..." (pcre2_envsubst f {|...$(A)...${B}...|})
 
+let test_pcre2_dynamic_regexp ctxt =
+  let x = "" in
+  assert_equal ~printer:[%show: string option] (Some "abcdef") ([%match {|abc${x}def|} / pcre2 dynamic] "abcdef")
+
+  ; let x = "foo" in
+    assert_equal ~printer:[%show: string option] (Some "abcfoodef") ([%match {|abc${x}def|} / pcre2 dynamic] "abcfoodef")
+
 let suite = "Test pa_ppx_regexp" >::: [
       "simple_match"   >:: test_simple_match
     ; "pcre2 simple_match"   >:: test_pcre2_simple_match
@@ -290,6 +297,7 @@ let suite = "Test pa_ppx_regexp" >::: [
     ; "envsubst via replace"   >:: test_envsubst_via_replace
     ; "pcre2 envsubst via replace"   >:: test_pcre2_envsubst_via_replace
     ; "special chars"   >:: test_special_char_regexps
+    ; "pcre2 dynamic regexp" >:: test_pcre2_dynamic_regexp
     ]
 
 let _ = 
