@@ -10,13 +10,12 @@ ML= \
 ALLSRC=$(ML)
 ALLPACKAGES=$(PACKAGES)
 
-TESTS=pa_ppx_regexp_test.exe pa_ppx_regexp_nostatic_test.exe syntax_test.exe ya-wrap-ocamlfind join_meta standalone_test.exe
+TESTS=pa_ppx_regexp_test.exe syntax_test.exe ya-wrap-ocamlfind join_meta standalone_test.exe
 
 all: $(TESTS)
 
 test:: all mdx-test
 	mkdir -p _build && ./pa_ppx_regexp_test.exe
-	mkdir -p _build && ./pa_ppx_regexp_nostatic_test.exe
 	mkdir -p _build && ./syntax_test.exe
 	mkdir -p _build && ./standalone_test.exe
 
@@ -24,14 +23,6 @@ mdx-test:: error-handling.asciidoc.TEST
 
 pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<
-
-pa_ppx_regexp_nostatic_test.exe: pa_ppx_regexp_nostatic_test.cmo
-	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package ounit2,pa_ppx.utils,re,pa_ppx_regexp_runtime -linkpkg -linkall -o $@ $<
-
-pa_ppx_regexp_nostatic_test.ml: pa_ppx_regexp_test.ml Makefile
-	echo "(**pp -syntax camlp5o -ppopt -pa_ppx_regexp-nostatic -package pa_ppx.deriving_plugins.std *)" > $@.NEW
-	cat $< >> $@.NEW
-	mv $@.NEW $@
 
 standalone_test.exe: standalone_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package re,pcre2 -linkpkg -linkall -o $@ $<
@@ -47,4 +38,3 @@ join_meta: join_meta.cmo
 
 clean::
 	rm -rf *.cm* _build *.exe ya-wrap-ocamlfind join_meta *.NEW
-	rm -rf pa_ppx_regexp_nostatic_test.ml
