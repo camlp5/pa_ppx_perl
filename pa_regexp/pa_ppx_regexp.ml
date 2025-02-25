@@ -499,7 +499,9 @@ let build_string loc ~cgroups ~options patstr =
                       (Some "$$", _, _, _) -> let dollar = "$" in <:expr< $str:dollar$ >>
                     | (_, Some nstr, _, _)
                     | (_, _, Some nstr, _) ->
-                       if ngroups > 0 && int_of_string nstr >= ngroups then
+                       if ngroups < 0 then 
+                         Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed" nstr ngroups)
+                       else if ngroups > 0 && int_of_string nstr >= ngroups then
                          Fmt.(raise_failwithf loc "Pattern(string): capture-group reference %s not in range [0..%d)" nstr ngroups) ;
                        has_cgroups := true ;
                        cgroup_extract_expr nstr
@@ -530,7 +532,9 @@ let build_expr loc ~cgroups ~options (patloc, patstr) =
   let migrate_expr dt = function
       ExXtr(loc, antiquot, _) ->
        let (nstr,_) = Std.sep_last (String.split_on_char ':' antiquot) in
-       if ngroups > 0 && int_of_string nstr >= ngroups then
+       if ngroups < 0 then 
+         Fmt.(raise_failwithf loc "Pattern(string): capture-groups not allowed" nstr ngroups)
+       else if ngroups > 0 && int_of_string nstr >= ngroups then
          Fmt.(raise_failwithf loc "Pattern(expr): capture-group reference %s not in range [0..%d)" nstr ngroups) ;
        has_cgroups := true ;
        cgroup_extract_expr nstr
