@@ -623,7 +623,7 @@ let rewrite_pattern arg = function
   <:expr:< [%pattern $locstr:(patloc, Ploc.VaVal s)$ / $exp:optexpr$ ] >> ->
    let options = Options.convert optexpr in
    Pattern.build_pattern loc ~cgroups:None ~options (patloc, s)
-| <:expr:< [%pattern $locstr:(patloc, Ploc.VaVal s)$ ] >> -> Pattern.build_pattern loc ~cgroups:None ~options:[Options.RePerl] (patloc, s)
+| <:expr:< [%pattern $locstr:(patloc, Ploc.VaVal s)$ ] >> -> Pattern.build_pattern loc ~cgroups:None ~options:[] (patloc, s)
 | e -> Fmt.(raise_failwithf (MLast.loc_of_expr e) "pa_regexp.rewrite_pattern: unsupported extension <<%a>>"
             Pp_MLast.pp_expr e)
 

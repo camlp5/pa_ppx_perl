@@ -177,10 +177,10 @@ let test_pcre2_delim_split_raw ctxt =
 
 let test_string_pattern ctxt =
   ()
-  ; assert_equal "$b"  ([%pattern {|$$$1|}] ([%match "a(b)c"/exc raw] "abc"))
-  ; assert_equal "b"  ([%pattern {|${01}|}] ([%match "a(b)c"/exc raw] "abc"))
-  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|}] ([%match "a(b)c"/exc raw] "abc"))
-  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|}] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal "$b"  ([%pattern {|$$$1|} / re_perl] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal "b"  ([%pattern {|${01}|} / re_perl] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal "bx"  (let s = "x" in [%pattern {|${01}${s}|} / re_perl] ([%match "a(b)c"/exc raw] "abc"))
+  ; assert_equal {|"bx|}  (let s = "x" in [%pattern {|"${01}${s}|} / re_perl] ([%match "a(b)c"/exc raw] "abc"))
   ; assert_equal {|"x|}  (let s = "x" in [%pattern {|"${s}|}])
 
 let test_pcre2_string_pattern ctxt =
