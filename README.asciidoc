@@ -430,8 +430,7 @@ regexp to match, we might want to dispense with the `option`:
 ```ocaml
 # [%match {|(a)?|} / foo];;
 File "_none_", line 1, characters 19-22:
-Failure: extract_options: malformed option: <<(MLast.ExLid (<loc>,
-                                        (Pp_MLast.Ploc.VaVal "foo")))>>
+Failure: extract_options: malformed option
 Line 1, characters 0-0:
 Error: Stdlib.Exit
 ```

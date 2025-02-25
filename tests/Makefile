@@ -14,11 +14,13 @@ TESTS=pa_ppx_regexp_test.exe pa_ppx_regexp_nostatic_test.exe syntax_test.exe ya-
 
 all: $(TESTS)
 
-test:: all
+test:: all mdx-test
 	mkdir -p _build && ./pa_ppx_regexp_test.exe
 	mkdir -p _build && ./pa_ppx_regexp_nostatic_test.exe
 	mkdir -p _build && ./syntax_test.exe
 	mkdir -p _build && ./standalone_test.exe
+
+mdx-test:: error-handling.asciidoc.TEST
 
 pa_ppx_regexp_test.exe: pa_ppx_regexp_test.cmo
 	$(LAUNCH) $(OCAMLFIND) ocamlc -linkall -linkpkg $(OCAMLCFLAGS) -package $(PACKAGES) -linkpkg -linkall -o $@ $<

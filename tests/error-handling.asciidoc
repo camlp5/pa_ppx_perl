@@ -1,0 +1,87 @@
+Test Error Handling
+===================
+:toc:
+:toc-placement: preamble
+
+```ocaml
+# #use "topfind.camlp5";;
+- : unit = ()
+Findlib has been successfully loaded. Additional directives:
+  #require "package";;      to load a package
+  #list;;                   to list the available packages
+  #camlp4o;;                to load camlp4 (standard syntax)
+  #camlp4r;;                to load camlp4 (revised syntax)
+  #predicates "p,q,...";;   to set these predicates
+  Topfind.reset();;         to force that packages will be reloaded
+  #thread;;                 to enable threads
+
+- : unit = ()
+Additional Camlp5 directives:
+  #camlp5o;;                to load camlp5 (standard syntax)
+  #camlp5r;;                to load camlp5 (revised syntax)
+
+- : unit = ()
+# #camlp5o ;;
+# #require "pa_ppx_regexp" ;;
+# let exc_converter = function
+    Exit as exc ->
+    let s = Printexc.to_string exc in
+    Some (Location.error s)
+  | _ -> None
+val exc_converter : exn -> Location.report option = <fun>
+# Location.register_error_of_exn exc_converter ;;
+- : unit = ()
+```
+
+```ocaml
+# [%match "a(bc"/exc strings] ;;
+File "_none_", line 1, characters 0-27:
+Uncaught exception: Re__Parse_buffer.Parse_error
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(bc"/exc pcre2 strings] ;;
+File "_none_", line 1, characters 9-13:
+Uncaught exception: Pcre2.Error(Pcre2.BadPattern("missing closing parenthesis", pos=4))
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(bc"/exc strings foo] ;;
+File "_none_", line 1, characters 27-30:
+Failure: extract_options: malformed option
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(b)c"/exc strings (!0,1,x)] ;;
+File "_none_", line 1, characters 34-35:
+Failure: extract_options: malformed option
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(b)c"/exc strings (!0,1,2)] ;;
+File "_none_", line 1, characters 0-37:
+Failure: Match(Re): group 2 exceeds capture groups of [0..2)
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(b)c"/exc pcre2 strings (!0,1,2)] ;;
+File "_none_", line 1, characters 0-43:
+Failure: Match(Pcre2): group 2 exceeds capture groups of [0..2)
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+# [%match "a(b)c"/exc strings pcre2 (!0,1,2)] ;;
+File "_none_", line 1, characters 34-42:
+Failure: extract_options: malformed option (maybe this is the problem) group-list must be immediately preceded by 'strings'
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+```
+
+```ocaml
+# [%subst ".+" / {|<<$99>>|}] ;;
+File "_none_", line 1, characters 19-22:
+Failure: Pattern(string): capture-group reference 99 not in range [0..1)
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
+```
