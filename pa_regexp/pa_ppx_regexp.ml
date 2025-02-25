@@ -233,6 +233,25 @@ let wrap_loc loc f arg =
   with e ->
         raise (Ploc.Exc(loc, e))
 
+
+module RE = struct
+open Options
+let build loc ~options (reloc, restr) =
+  let use_dynamic = List.mem Dynamic options in
+  if List.mem Pcre2 options then
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr
+
+  else if List.mem RePerl options then
+    let compile_opt_expr = compile_opts loc options in
+    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr
+  else Fmt.(raise_failwithf loc "pa_ppx_regexp: neither <<re>> nor <<pcre2>> were found in options: %a\n"
+              (list ~sep:(const string " ") Options.pp_hum) options)
+
+end
+
 module Match = struct
 
 module ReBuild = struct
@@ -342,21 +361,16 @@ let group_count loc options (reloc, restr) =
 let build_regexp loc ~options (reloc, restr) =
   let open Options in
   validate_options "match" loc options ;
+  let regexp_expr = RE.build loc ~options (reloc, restr) in
   let use_exception = List.mem Exception options in
-  let use_dynamic = List.mem Dynamic options in
   let ngroups = group_count loc options (reloc, restr) in
+
   if List.mem Pcre2 options then
-    let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
-    let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
     let result = Pcre2Build._result loc ~options ngroups use_exception in
     <:expr< let __re__ = $exp:regexp_expr$ in
             fun __subj__->
             $exp:result$ >>
   else if List.mem RePerl options then
-    let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-    let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
     let result = ReBuild._result loc ~options ngroups use_exception in
     <:expr< let __re__ = $exp:regexp_expr$ in
             fun __subj__->
