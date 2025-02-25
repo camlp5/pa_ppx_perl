@@ -406,7 +406,7 @@ let build_dynamic_regexp_string loc ~options (patloc, patstr) =
        |> List.map (function
                 (loc, `Text s) -> s
               | (loc, `CGroup n) -> assert false
-              | (loc, `Expr e) -> ""
+              | (loc, `Expr e) -> "x"
             )
        |> String.concat "" in
      let listexpr = convert_up_list_expr loc parts_exps in

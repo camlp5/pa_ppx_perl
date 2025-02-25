@@ -270,6 +270,8 @@ let test_pcre2_dynamic_regexp ctxt =
 
   ; let x = "foo" in
     assert_equal ~printer:[%show: string option] (Some "abcfoodef") ([%match {|abc${x}def|} / pcre2 dynamic] "abcfoodef")
+  ; let x = "W" in
+    assert_equal ~printer:[%show: string] "WWWW" ([%subst "foo(${x}+)bar" / {|$1|} / pcre2 dynamic] "fooWWWWbar")
 
 let suite = "Test pa_ppx_regexp" >::: [
       "simple_match"   >:: test_simple_match
