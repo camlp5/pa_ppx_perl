@@ -120,6 +120,7 @@ type t =
 | RePerl
 | Pcre2
 | Dynamic
+| Static
 [@@deriving show]
 
 let pp_hum pps = function
@@ -140,6 +141,7 @@ let pp_hum pps = function
 | RePerl -> Fmt.(pf pps "re_perl")
 | Pcre2 -> Fmt.(pf pps "pcre2")
 | Dynamic -> Fmt.(pf pps "dynamic")
+| Static -> Fmt.(pf pps "static")
 
 let fixed_only l =
   Std.filter (function StringGroups _ -> false | _ -> true) l
@@ -179,6 +181,7 @@ let convert e =
     | <:expr< re_perl >>::l -> RePerl::(conv l)
     | <:expr< pcre2 >>::l -> Pcre2::(conv l)
     | <:expr< dynamic >>::l -> Dynamic::(conv l)
+    | <:expr< static >>::l -> Static::(conv l)
     | [] -> []
     | (e::_) -> badarg e in
   let (f,l) = Expr.unapplist e in
@@ -443,6 +446,8 @@ let _build loc ~options (reloc, restrexp) =
 
 let build loc ~options (reloc, restr) =
   let unesc_restr = Scanf.unescaped restr in
+  if List.length (Pattern.extract_parts loc unesc_restr) > 1 && [] = Std.intersect [Dynamic;Static] options then
+    Fmt.(raise_failwithf loc "Must specify one of dynamic, static for a regexp that appears to have dynamic syntax") ;
   let use_dynamic = List.mem Dynamic options in
   let (restrexp, unesc_restr) =
     if not use_dynamic then (<:expr< $str:restr$ >>, unesc_restr)
@@ -547,7 +552,7 @@ let validate_options modn loc options =
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Raw; Strings; Pred; RePerl; Pcre2; Dynamic] options in
+  let fl = forbidden_options  ~l:[Insensitive; Single; Multi; Exception; Raw; Strings; Pred; RePerl; Pcre2; Dynamic; Static] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
@@ -649,7 +654,7 @@ let validate_options modn loc options =
   if not (check_oneof ~l:[Multi;Single] options) then
     Fmt.(raise_failwithf loc "%s extension: can specify at most one of <<s>>, <<m>>: %a"
            modn (list ~sep:(const string " ") Options.pp_hum) options) ;
-  let fl = forbidden_options  ~l:[Global; Multi; Single; Insensitive; Expr; RePerl; Pcre2; Dynamic] options in
+  let fl = forbidden_options  ~l:[Global; Multi; Single; Insensitive; Expr; RePerl; Pcre2; Dynamic; Static] options in
   if fl <> [] then
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
