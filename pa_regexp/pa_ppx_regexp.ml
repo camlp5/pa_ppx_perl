@@ -379,8 +379,19 @@ let build_pattern loc ~cgroups ~options (patloc, patstr) =
 end
 
 module RE = struct
+
+let group_count loc options (reloc, restr) =
+  let open Options in
+  if List.mem Pcre2 options then
+    1 + Pcre2.capturecount (wrap_loc reloc Pcre2.regexp (Scanf.unescaped restr))
+  else if List.mem RePerl options then
+    let re = wrap_loc loc Re.Perl.compile_pat (Scanf.unescaped restr) in
+    Re.group_count re
+  else assert false
+
+
 open Options
-let build loc ~options (reloc, restr) =
+let _build loc ~options (reloc, restr) =
   let use_dynamic = List.mem Dynamic options in
   if List.mem Pcre2 options then
     let compile_opt_expr = compile_opts loc options in
@@ -393,6 +404,10 @@ let build loc ~options (reloc, restr) =
     if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr
   else Fmt.(raise_failwithf loc "pa_ppx_regexp: neither <<re>> nor <<pcre2>> were found in options: %a\n"
               (list ~sep:(const string " ") Options.pp_hum) options)
+
+let build loc ~options (reloc, restr) =
+  (group_count loc options (reloc, restr),
+   _build loc ~options (reloc, restr))
 
 end
 
@@ -493,21 +508,11 @@ let validate_options modn loc options =
     Fmt.(raise_failwithf loc "%s extension: forbidden option: %a" modn (list ~sep:(const string " ") Options.pp_hum) fl) ;
   ()
 
-let group_count loc options (reloc, restr) =
-  let open Options in
-  if List.mem Pcre2 options then
-    1 + Pcre2.capturecount (wrap_loc reloc Pcre2.regexp (Scanf.unescaped restr))
-  else if List.mem RePerl options then
-    let re = wrap_loc loc Re.Perl.compile_pat (Scanf.unescaped restr) in
-    Re.group_count re
-  else assert false
-
 let build_regexp loc ~options (reloc, restr) =
   let open Options in
   validate_options "match" loc options ;
-  let regexp_expr = RE.build loc ~options (reloc, restr) in
+  let (ngroups, regexp_expr) = RE.build loc ~options (reloc, restr) in
   let use_exception = List.mem Exception options in
-  let ngroups = group_count loc options (reloc, restr) in
 
   if List.mem Pcre2 options then
     let result = Pcre2Build._result loc ~options ngroups use_exception in
@@ -567,8 +572,7 @@ let validate_options modn loc options =
 let build_regexp loc ~options (reloc, restr) =
   let open Options in
   validate_options "split" loc options ;
-  let regexp_expr = RE.build loc ~options (reloc, restr) in
-  let ngroups = Match.group_count loc options (reloc, restr) in
+  let (ngroups, regexp_expr) = RE.build loc ~options (reloc, restr) in
   if List.mem RePerl options then
     if ngroups > 1 && not (List.mem Strings options || List.mem Raw options) then
       Fmt.(raise_failwithf loc "split extension: must specify one of <<strings>>, <<raw>> for regexp with capture groups: %a"
@@ -609,8 +613,7 @@ let validate_options modn loc options =
   let build_subst loc ~options (reloc, restr) (patloc, patstr) =
   let open Options in
   validate_options "subst" loc options ;
-  let regexp_expr = RE.build loc ~options (reloc, restr) in
-  let ngroups = Match.group_count loc options (reloc, restr) in
+  let (ngroups, regexp_expr) = RE.build loc ~options (reloc, restr) in
   if List.mem RePerl options then
     let _ = wrap_loc reloc Re.Perl.compile_pat (Scanf.unescaped restr) in
     let global = List.mem Global options in
