@@ -447,7 +447,6 @@ let build_regexp loc ~options (reloc, restr) =
               (list ~sep:(const string " ") Options.pp_hum) options)
 end
 
-
 module Pattern = struct
 
 (* String parts are:
@@ -593,24 +592,18 @@ let validate_options modn loc options =
   let build_subst loc ~options (reloc, restr) (patloc, patstr) =
   let open Options in
   validate_options "subst" loc options ;
-  let use_dynamic = List.mem Dynamic options in
+  let regexp_expr = RE.build loc ~options (reloc, restr) in
   let ngroups = Match.group_count loc options (reloc, restr) in
   if List.mem RePerl options then
     let _ = wrap_loc reloc Re.Perl.compile_pat (Scanf.unescaped restr) in
     let global = List.mem Global options in
     let global = if global then <:expr< true >> else <:expr< false >> in
-    let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-    let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
     let patexpr = Pattern.build_pattern loc ~cgroups:(Some ngroups) ~options:(Std.intersect [Expr;RePerl] options) (patloc, patstr) in
     <:expr< Re.replace ~all:$exp:global$ $exp:regexp_expr$ ~f:$exp:patexpr$ >>
   else if List.mem Pcre2 options then
     let _ = wrap_loc reloc Pcre2.regexp (Scanf.unescaped restr) in
     let global = List.mem Global options in
     let replacef = if global then <:expr< Pcre2.substitute_substrings >> else <:expr< Pcre2.substitute_substrings_first >> in
-    let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
-    let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
     let patexpr = Pattern.build_pattern loc ~cgroups:(Some ngroups) ~options:(Std.intersect [Expr;Pcre2] options) (patloc, patstr) in
     <:expr< $exp:replacef$ ~rex:$exp:regexp_expr$ ~subst:$exp:patexpr$ >>
   else Fmt.(raise_failwithf loc "subst extension: neither <<re>> nor <<pcre2>> were found in options: %a\n"
