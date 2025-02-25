@@ -84,4 +84,10 @@ Failure: Pattern(string): capture-group reference 99 not in range [0..1)
 
 Line 1, characters 0-0:
 Error: Stdlib.Exit
+# [%subst ".+" / {|<<$99>>|} / pcre2] ;;
+File "_none_", line 1, characters 19-22:
+Failure: Pattern(string): capture-group reference 99 not in range [0..1)
+
+Line 1, characters 0-0:
+Error: Stdlib.Exit
 ```
