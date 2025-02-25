@@ -423,16 +423,13 @@ let validate_options modn loc options =
 let build_regexp loc ~options (reloc, restr) =
   let open Options in
   validate_options "split" loc options ;
-  let use_dynamic = List.mem Dynamic options in
+  let regexp_expr = RE.build loc ~options (reloc, restr) in
   let ngroups = Match.group_count loc options (reloc, restr) in
   if List.mem RePerl options then
     if ngroups > 1 && not (List.mem Strings options || List.mem Raw options) then
       Fmt.(raise_failwithf loc "split extension: must specify one of <<strings>>, <<raw>> for regexp with capture groups: %a"
              (list Options.pp) options)
     else
-      let compile_opt_expr = compile_opts loc options in
-      let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
-      let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
       let result = ReBuild._result loc ~options ngroups in
       <:expr< let __re__ = $exp:regexp_expr$ in
               fun __subj__->
@@ -442,9 +439,6 @@ let build_regexp loc ~options (reloc, restr) =
       Fmt.(raise_failwithf loc "split extension: must specify one of <<strings>>, <<raw>> for regexp with capture groups: %a"
              (list Options.pp) options)
     else
-      let compile_opt_expr = compile_opts loc options in
-      let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
-      let regexp_expr = if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr in
       let result = Pcre2Build._result loc ~options ngroups in
       <:expr< let __re__ = $exp:regexp_expr$ in
               fun __subj__->
