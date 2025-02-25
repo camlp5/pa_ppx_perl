@@ -1,4 +1,4 @@
-(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.testutils *)
+(**pp -syntax camlp5o -package pa_ppx.deriving_plugins.std,pa_ppx.testutils,pa_ppx.import *)
 open OUnit2
 
 open Pa_ppx_testutils
@@ -264,7 +264,10 @@ let test_pcre2_envsubst_via_replace ctxt =
   let f = function "A" -> "res1" | "B" -> "res2" in
   assert_equal "...res1...res2..." (pcre2_envsubst f {|...$(A)...${B}...|})
 
+[%%import: Pcre2.split_result][@@deriving show]
+
 let test_pcre2_dynamic_regexp ctxt =
+  let open Pcre2 in
   let x = "" in
   assert_equal ~printer:[%show: string option] (Some "abcdef") ([%match {|abc${x}def|} / pcre2 dynamic] "abcdef")
 
@@ -272,6 +275,10 @@ let test_pcre2_dynamic_regexp ctxt =
     assert_equal ~printer:[%show: string option] (Some "abcfoodef") ([%match {|abc${x}def|} / pcre2 dynamic] "abcfoodef")
   ; let x = "W" in
     assert_equal ~printer:[%show: string] "WWWW" ([%subst "foo(${x}+)bar" / {|$1|} / pcre2 dynamic] "fooWWWWbar")
+
+  ; let x = "c" in
+    assert_equal ~printer:[%show: split_result list] [Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(${x})"/pcre2 raw dynamic] "acbacbac")
+  ; assert_equal ~printer:[%show: split_result list] [Delim "acc"; Group (1, "cc"); Text "b"; Delim "acc"; Group (1, "cc"); Text "b"; Delim "ac"; Group (1, "c")] ([%split "a(${x}+)"/pcre2 raw dynamic] "accbaccbac")
 
 let suite = "Test pa_ppx_regexp" >::: [
       "simple_match"   >:: test_simple_match
