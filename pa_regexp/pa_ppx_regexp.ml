@@ -376,38 +376,76 @@ let build_pattern loc ~cgroups ~options (patloc, patstr) =
   else
     build_string patloc ~cgroups ~options patstr
 
+let build_dynamic_regexp_string loc ~options (patloc, patstr) =
+  let open Options in
+  validate_options "pattern" loc options ;
+  let quote_expr =
+    if List.mem Pcre2 options then
+      <:expr< Pcre.quote >>
+  else if List.mem RePerl options then
+      Fmt.(raise_failwithf loc "Dynamic Regexp: cannot do it with re_perl (no support for quoting")
+  else assert false in
+
+  let unesc_patstr = Scanf.unescaped patstr in
+  let loc_parts = extract_parts loc unesc_patstr in
+  match loc_parts with
+    [_, `Text _] -> (<:expr< $str:patstr$ >>, unesc_patstr)
+  | _ ->
+  let parts_exps =
+    loc_parts |> List.map (function
+                       (loc, `Text s) ->
+                        let s = String.escaped s in
+                        <:expr< $quote_expr$ $str:s$ >>
+                     | (loc, `CGroup n) ->
+                          Fmt.(raise_failwithf loc "Dynamic Regexp: capture-groups not allowed")
+
+                     | (loc, `Expr e) -> <:expr< $quote_expr$ $e$ >>
+                   ) in
+  let simple_version =
+    loc_parts
+    |> List.map (function
+             (loc, `Text s) -> s
+           | (loc, `CGroup n) -> assert false
+           | (loc, `Expr e) -> ""
+         )
+    |> String.concat "" in
+  let listexpr = convert_up_list_expr loc parts_exps in
+  (<:expr< String.concat "" $exp:listexpr$ >>, simple_version)
+
 end
 
 module RE = struct
 
-let group_count loc options (reloc, restr) =
+let group_count loc options (reloc, unesc_restr) =
   let open Options in
   if List.mem Pcre2 options then
-    1 + Pcre2.capturecount (wrap_loc reloc Pcre2.regexp (Scanf.unescaped restr))
+    1 + Pcre2.capturecount (wrap_loc reloc Pcre2.regexp unesc_restr)
   else if List.mem RePerl options then
-    let re = wrap_loc loc Re.Perl.compile_pat (Scanf.unescaped restr) in
+    let re = wrap_loc loc Re.Perl.compile_pat unesc_restr in
     Re.group_count re
   else assert false
 
 
 open Options
-let _build loc ~options (reloc, restr) =
+let _build loc ~options (reloc, restrexp) =
   let use_dynamic = List.mem Dynamic options in
   if List.mem Pcre2 options then
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< Pcre2.regexp ~flags:$exp:compile_opt_expr$ $restrexp$ >> in
     if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr
 
   else if List.mem RePerl options then
     let compile_opt_expr = compile_opts loc options in
-    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $str:restr$ >> in
+    let regexp_expr = <:expr< Re.Perl.compile_pat ~opts:$exp:compile_opt_expr$ $restrexp$ >> in
     if not use_dynamic then <:expr< [%static $exp:regexp_expr$ ] >> else regexp_expr
   else Fmt.(raise_failwithf loc "pa_ppx_regexp: neither <<re>> nor <<pcre2>> were found in options: %a\n"
               (list ~sep:(const string " ") Options.pp_hum) options)
 
 let build loc ~options (reloc, restr) =
-  (group_count loc options (reloc, restr),
-   _build loc ~options (reloc, restr))
+  let unesc_restr = Scanf.unescaped restr in
+  let restrexp = <:expr< $str:restr$ >> in
+  (group_count loc options (reloc, unesc_restr),
+   _build loc ~options (reloc, restrexp))
 
 end
 
